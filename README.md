@@ -7,7 +7,7 @@ A light meta agent orchestration harness designed to coordinate multiple AI agen
 The primary responsibility of this harness is to **reduce context bloat** by digesting a project plan into three documents:
 
 | Document | Purpose |
-|----------|---------|
+| ---------- | --------- |
 | `TASKS.md` | Task list with status tracking and dependencies |
 | `LEARNINGS.md` | Accumulated insights from completed tasks |
 | `PROMPT.md` | System prompt with guardrails ("signs") |
@@ -18,20 +18,10 @@ The harness consists of a simple for-loop, executing a new coding agent with a m
 
 ```bash
 # Clone and link globally
-git clone <repo-url>
+git clone https://github.com/cephalization/math.git
 cd math
+bun install
 bun link
-```
-
-## Prerequisites
-
-- [Bun](https://bun.sh) runtime
-- [OpenCode CLI](https://opencode.ai) for agent invocation
-
-```bash
-# Install OpenCode
-curl -fsSL https://opencode.ai/install | bash
-opencode auth login
 ```
 
 ## Usage
@@ -45,6 +35,7 @@ math init
 Creates a `todo/` directory with template files and offers to run **planning mode** to help you break down your goal into tasks.
 
 Options:
+
 - `--no-plan` - Skip the planning prompt
 
 ### Plan your tasks
@@ -62,6 +53,7 @@ math run
 ```
 
 Options:
+
 - `--model <model>` - Model to use (default: `anthropic/claude-opus-4-20250514`)
 - `--max-iterations <n>` - Safety limit (default: 100)
 - `--pause <seconds>` - Pause between iterations (default: 3)
@@ -81,11 +73,13 @@ math iterate
 ```
 
 Backs up `todo/` to `todo-{M}-{D}-{Y}/` and resets for a new goal:
+
 - TASKS.md and LEARNINGS.md are reset to templates
 - PROMPT.md is preserved (keeping your accumulated "signs")
 - Offers to run planning mode for your new goal
 
 Options:
+
 - `--no-plan` - Skip the planning prompt
 
 ## Task Format
@@ -146,7 +140,7 @@ Signs accumulate over time, making the agent increasingly reliable.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODEL` | `anthropic/claude-opus-4-20250514` | Model to use |
+| `MODEL`  | `anthropic/claude-opus-4-20250514` | Model to use |
 
 ## Credits
 
