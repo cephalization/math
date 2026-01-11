@@ -52,3 +52,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Skipped adding a unit test for this function because it directly calls `Bun.$` and proper mocking is scheduled for Phase 4 (add-git-module-tests)
 - The function takes a branch name as parameter (rather than generating it) to maintain separation of concerns - `generateBranchName` handles naming, `createBranchFromCurrent` handles git operations
 - Returns `Promise<void>` since the caller doesn't need the branch name back (they already have it)
+
+## implement-default-branch-mode
+
+- Renamed `createWorkingBranch` to `createBranchFromDefault` to follow the naming pattern from `createBranchFromCurrent`
+- Changed signature from `(loggers: Loggers): Promise<string>` to `(branchName: string, loggers: Loggers): Promise<void>`
+- Removed the timestamp-based branch name generation since the caller now provides the branch name via `generateBranchName`
+- Return type changed from `Promise<string>` to `Promise<void>` - consistent with `createBranchFromCurrent` since the caller already has the branch name
+- Kept all the fetch/checkout/pull logic intact - this is the key difference from `createBranchFromCurrent` (which just creates from HEAD)
+- Updated the import in `loop.ts` from `createWorkingBranch` to `createBranchFromDefault`
+- Server test failure (port 8314) is pre-existing and unrelated to this change

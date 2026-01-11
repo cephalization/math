@@ -55,7 +55,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### implement-default-branch-mode
 
 - content: Implement the `"default"` branch mode. Update `createWorkingBranch` to accept a `branchName` parameter and use it instead of generating timestamp-based names. Keep the fetch/checkout default branch logic. Rename to `createBranchFromDefault(branchName: string, loggers: Loggers)`.
-- status: pending
+- status: complete
 - dependencies: implement-current-branch-mode
 
 ### implement-none-branch-mode

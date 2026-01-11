@@ -71,19 +71,15 @@ export async function createBranchFromCurrent(branchName: string): Promise<void>
 }
 
 /**
- * Create a new working branch from the default branch.
+ * Create a new branch from the default branch (main/master).
  * Fetches latest, checks out default branch, pulls, then creates new branch.
  *
+ * @param branchName - The name for the new branch
  * @param loggers - Logger functions for status messages
- * @returns The name of the created branch
  */
-export async function createWorkingBranch(loggers: Loggers): Promise<string> {
+export async function createBranchFromDefault(branchName: string, loggers: Loggers): Promise<void> {
   const { log, logWarning } = loggers;
   const defaultBranch = await getDefaultBranch();
-
-  // Generate branch name with timestamp
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const branchName = `math-loop-${timestamp}`;
 
   // Fetch latest and checkout default branch
   log(`Fetching latest from origin...`);
@@ -106,6 +102,4 @@ export async function createWorkingBranch(loggers: Loggers): Promise<string> {
   // Create and checkout new branch
   log(`Creating branch: ${branchName}`);
   await Bun.$`git checkout -b ${branchName}`.quiet();
-
-  return branchName;
 }

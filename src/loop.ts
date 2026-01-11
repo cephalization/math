@@ -6,7 +6,7 @@ import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
 import type { Agent, LogCategory } from "./agent";
 import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
 import { startServer, DEFAULT_PORT } from "./ui/server";
-import { getDefaultBranch, createWorkingBranch, type Loggers } from "./git";
+import { getDefaultBranch, createBranchFromDefault, type Loggers } from "./git";
 
 const colors = {
   reset: "\x1b[0m",
