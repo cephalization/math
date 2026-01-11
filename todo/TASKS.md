@@ -77,7 +77,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### react-app-scaffold
 
 - content: Create `src/ui/app.tsx` with a basic React app structure. Set up the WebSocket connection to "/ws", store received messages in state, and render two sections: "Loop Status" and "Agent Output". Use React 18's createRoot. Install react and react-dom as dependencies.
-- status: pending
+- status: complete
 - dependencies: html-shell
 
 ### stream-display

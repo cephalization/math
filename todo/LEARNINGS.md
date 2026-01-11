@@ -94,3 +94,17 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Set `html, body, #root` to 100% height/width so React app can use full viewport
 - `box-sizing: border-box` reset helps with predictable layout calculations in the React components
 - This is a simple shell - the real styling will happen in the React components (stream-display task)
+
+## react-app-scaffold
+
+- Installed `react`, `react-dom`, `@types/react`, and `@types/react-dom` - all version 19.x for React 19 (latest)
+- Used `createRoot` from `react-dom/client` per React 18+ pattern (not ReactDOM.render)
+- WebSocket URL construction uses `window.location.protocol` and `window.location.host` for proper http/https handling
+- State management: separate `useState` for logs, output, and connection status - simple and effective
+- Message handling uses a switch statement on `message.type` - matches the `WebSocketMessage` discriminated union
+- Types imported from `./buffer` and `./server` ensure frontend and backend stay in sync
+- Inline styles object pattern (`const styles: Record<string, React.CSSProperties>`) provides type checking for CSS
+- The `useRef` for WebSocket instance enables cleanup in the useEffect return function
+- Tests for React UI code focus on file content assertions rather than DOM testing - keeps tests simple and fast
+- The app renders two side-by-side sections ("Loop Status" and "Agent Output") per the task spec
+- Connection status indicator is a simple text span that changes color based on `connected` state
