@@ -84,3 +84,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Better pattern: collect all messages in arrays via `onmessage` handlers, then filter and assert after a small delay
 - Exported `WebSocketMessage` type for type-safe parsing in tests and future frontend code
 - The `BufferLogEntry` and `BufferAgentOutput` types needed to be imported from buffer.ts for the message types
+
+## html-shell
+
+- Bun's HTML imports allow `./app.tsx` to be referenced directly in script tags - Bun handles the transpilation automatically
+- Used `<script type="module" src="./app.tsx">` to enable ESM imports in the React app
+- Minimal inline styles in `<style>` block keep the HTML self-contained while avoiding external CSS dependencies
+- Dark theme: `#1a1a1a` background with `#e0e0e0` text provides good contrast without being harsh
+- Set `html, body, #root` to 100% height/width so React app can use full viewport
+- `box-sizing: border-box` reset helps with predictable layout calculations in the React components
+- This is a simple shell - the real styling will happen in the React components (stream-display task)

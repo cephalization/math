@@ -71,7 +71,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### html-shell
 
 - content: Create `src/ui/index.html` with a basic HTML shell that loads a React app from `./app.tsx`. Include minimal inline styles for dark theme (dark background, light text). The HTML should have a div with id "root" for React to mount into.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### react-app-scaffold
