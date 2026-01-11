@@ -55,7 +55,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### bun-server
 
 - content: Create `src/ui/server.ts` that exports a function to start a Bun.serve() web server on port 8314. It should serve a single HTML page at "/" and provide a WebSocket endpoint at "/ws" for streaming updates. The server should accept the output buffer as a dependency. For now, just get the server structure in place with placeholder responses.
-- status: pending
+- status: complete
 - dependencies: output-buffer
 
 ### websocket-streaming

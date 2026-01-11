@@ -61,3 +61,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Console.log calls continue working for non-UI mode - the buffer is purely additive
 - Tests mock both `console.log` and `process.stdout.write` to verify output goes to both destinations
 - Buffer subscriptions work in real-time - subscribers receive entries as they are appended during loop execution
+
+## bun-server
+
+- Bun.serve() returns a server object with inferred type - no need to import `Server` type explicitly (it requires a generic argument anyway)
+- For WebSocket upgrade, use `server.upgrade(req, { data })` inside fetch handler - if successful returns truthy and you return `undefined`
+- `routes` object handles static routes, `fetch` function handles dynamic routes and WebSocket upgrades
+- WebSocket handlers receive `ServerWebSocket<T>` where T is the data type attached during upgrade
+- For tests, use different ports per test to avoid conflicts (8315, 8316, etc.) since tests may run in parallel
+- `afterEach` with `server.stop()` ensures clean teardown between tests
+- WebSocket tests need proper timeout handling with Promise wrappers around event callbacks
+- Placeholder responses are simple - just return `new Response()` with appropriate headers/status
