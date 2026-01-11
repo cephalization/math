@@ -39,3 +39,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - TASKS.md format uses `###` (h3) for task IDs, not `##` (h2) - important for test fixtures
 - When testing agent invocation, need pending tasks - if all tasks complete, loop exits before calling agent
 - Event callbacks (onLog, onOutput) forward agent events to the loop's console.log and stdout
+
+## output-buffer
+
+- Created `src/ui/buffer.ts` as a shared module for storing loop logs and agent output separately
+- Reused the `LogCategory` type from `src/agent.ts` to keep categories consistent (info, success, warning, error)
+- Used callback-based subscriptions with `Set<Subscriber>` for efficient add/remove operations
+- Subscription functions return an unsubscribe function (closure pattern) for clean cleanup
+- `getLogs()` and `getOutput()` return copies of arrays (`[...array]`) to prevent external mutation
+- The `clear()` method was added for buffer reset while keeping subscriptions intact
+- Tests verify that subscriptions continue working after clear() - important for reconnection scenarios
+- Kept the module simple with no dependencies beyond the LogCategory type - YAGNI principle

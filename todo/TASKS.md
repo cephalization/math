@@ -39,7 +39,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### output-buffer
 
 - content: Create a shared output buffer module (`src/ui/buffer.ts`) that stores loop logs and agent output separately. Should export functions to append to each buffer, get full history, and subscribe to new entries. Use simple arrays and callback-based subscriptions. Include types for log entries with timestamps and categories (info, success, warning, error for loop; raw text for agent).
-- status: pending
+- status: complete
 - dependencies: mock-loop-interface
 
 ### stream-capture
