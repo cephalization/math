@@ -6,7 +6,13 @@ import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
 import type { Agent, LogCategory } from "./agent";
 import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
 import { startServer, DEFAULT_PORT } from "./ui/server";
-import { getDefaultBranch, createBranchFromDefault, setupBranch, type Loggers, type BranchMode } from "./git";
+import {
+  getDefaultBranch,
+  createBranchFromDefault,
+  setupBranch,
+  type Loggers,
+  type BranchMode,
+} from "./git";
 
 // Re-export BranchMode for consumers of loop.ts
 export type { BranchMode };
@@ -73,8 +79,6 @@ async function checkOpenCode(): Promise<boolean> {
     return false;
   }
 }
-
-
 
 export async function runLoop(options: LoopOptions = {}): Promise<void> {
   const model = options.model || DEFAULT_MODEL;
@@ -143,20 +147,20 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
   // Create a new branch for this loop run (skip in dry-run mode)
   let branchName: string | undefined;
-  if (!dryRun) {
-    log("Setting up git branch...");
-    branchName = await createWorkingBranch({
-      log,
-      logSuccess,
-      logWarning,
-      logError,
-    });
-    logSuccess(`Working on branch: ${branchName}`);
-    console.log();
-  } else {
-    log("[DRY RUN] Skipping git branch creation");
-    console.log();
-  }
+  // if (!dryRun) {
+  //   log("Setting up git branch...");
+  //   branchName = await createWorkingBranch({
+  //     log,
+  //     logSuccess,
+  //     logWarning,
+  //     logError,
+  //   });
+  //   logSuccess(`Working on branch: ${branchName}`);
+  //   console.log();
+  // } else {
+  //   log("[DRY RUN] Skipping git branch creation");
+  //   console.log();
+  // }
 
   log("Starting math loop");
   log(`Model: ${model}`);

@@ -66,7 +66,9 @@ export async function getDefaultBranch(): Promise<string> {
  *
  * @param branchName - The name for the new branch
  */
-export async function createBranchFromCurrent(branchName: string): Promise<void> {
+export async function createBranchFromCurrent(
+  branchName: string
+): Promise<void> {
   await Bun.$`git checkout -b ${branchName}`.quiet();
 }
 
@@ -77,7 +79,10 @@ export async function createBranchFromCurrent(branchName: string): Promise<void>
  * @param branchName - The name for the new branch
  * @param loggers - Logger functions for status messages
  */
-export async function createBranchFromDefault(branchName: string, loggers: Loggers): Promise<void> {
+export async function createBranchFromDefault(
+  branchName: string,
+  loggers: Loggers
+): Promise<void> {
   const { log, logWarning } = loggers;
   const defaultBranch = await getDefaultBranch();
 
@@ -108,7 +113,7 @@ export async function createBranchFromDefault(branchName: string, loggers: Logge
  * Branch mode determines how the loop creates working branches.
  * - "current": Create a branch from the current HEAD (simplest)
  * - "default": Fetch and branch from the default branch (main/master)
- * - "none": Skip branching entirely, work on current branch
+ * - "none": Skip branching entirely, work on current branch (default)
  */
 export type BranchMode = "current" | "default" | "none";
 

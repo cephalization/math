@@ -26,7 +26,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 
 ### add-branch-mode-type
 
-- content: Create a TypeScript type `BranchMode` with values `"current" | "default" | "none"` in `src/loop.ts`. Add `branchMode` to `LoopOptions` interface with default `"current"`. This establishes the configuration shape without changing behavior.
+- content: Create a TypeScript type `BranchMode` with values `"current" | "default" | "none"` in `src/loop.ts`. Add `branchMode` to `LoopOptions` interface with default `"none"`. This establishes the configuration shape without changing behavior.
 - status: complete
 - dependencies: none
 
