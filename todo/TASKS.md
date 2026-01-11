@@ -115,7 +115,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### connection-handling
 
 - content: Add robust connection handling to the frontend. When WebSocket disconnects, show a "Disconnected" banner and attempt to reconnect every 3 seconds. When reconnected, fetch full history again. Show "Connecting..." state on initial load.
-- status: pending
+- status: complete
 - dependencies: stream-display
 
 ### final-testing

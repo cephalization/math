@@ -3,11 +3,21 @@
  * Connects to WebSocket server and displays loop logs and agent output.
  */
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import type { BufferLogEntry, BufferAgentOutput } from "./buffer";
 import type { WebSocketMessage } from "./server";
 import type { LogCategory } from "../agent";
+
+/**
+ * Connection state for the WebSocket.
+ */
+type ConnectionState = "connecting" | "connected" | "disconnected";
+
+/**
+ * Reconnection interval in milliseconds.
+ */
+const RECONNECT_INTERVAL = 3000;
 
 /**
  * Color mapping for log categories matching terminal colors.
@@ -25,8 +35,9 @@ const categoryColors: Record<LogCategory, string> = {
 function App() {
   const [logs, setLogs] = useState<BufferLogEntry[]>([]);
   const [output, setOutput] = useState<BufferAgentOutput[]>([]);
-  const [connected, setConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const outputContainerRef = useRef<HTMLDivElement>(null);
 
@@ -44,23 +55,42 @@ function App() {
     }
   }, [output]);
 
-  useEffect(() => {
-    // Create WebSocket connection
+  /**
+   * Create a WebSocket connection and set up event handlers.
+   */
+  const connect = useCallback(() => {
+    // Clear any existing reconnect timer
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
+    setConnectionState("connecting");
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      setConnected(true);
+      setConnectionState("connected");
     };
 
     ws.onclose = () => {
-      setConnected(false);
+      setConnectionState("disconnected");
+      // Schedule reconnection attempt
+      reconnectTimerRef.current = setTimeout(() => {
+        connect();
+      }, RECONNECT_INTERVAL);
     };
 
     ws.onerror = () => {
-      setConnected(false);
+      // onclose will be called after onerror, so we don't need to handle reconnection here
     };
 
     ws.onmessage = (event) => {
@@ -71,7 +101,7 @@ function App() {
           // Connection confirmed
           break;
         case "history":
-          // Full history received
+          // Full history received - replace existing state
           setLogs(message.logs);
           setOutput(message.output);
           break;
@@ -85,11 +115,21 @@ function App() {
           break;
       }
     };
+  }, []);
+
+  useEffect(() => {
+    connect();
 
     return () => {
-      ws.close();
+      // Clean up on unmount
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
-  }, []);
+  }, [connect]);
 
   /**
    * Get the color for a log category.
@@ -98,19 +138,42 @@ function App() {
     return categoryColors[category] || "#e0e0e0";
   };
 
+  /**
+   * Get the status display properties based on connection state.
+   */
+  const getStatusDisplay = () => {
+    switch (connectionState) {
+      case "connecting":
+        return { color: "#facc15", text: "Connecting..." }; // yellow
+      case "connected":
+        return { color: "#4ade80", text: "Connected" }; // green
+      case "disconnected":
+        return { color: "#f87171", text: "Disconnected" }; // red
+    }
+  };
+
+  const statusDisplay = getStatusDisplay();
+
   return (
     <div style={styles.container}>
+      {/* Disconnected banner */}
+      {connectionState === "disconnected" && (
+        <div style={styles.disconnectedBanner}>
+          Connection lost. Reconnecting...
+        </div>
+      )}
+
       <header style={styles.header}>
         <h1 style={styles.title}>Math Agent UI</h1>
         <div style={styles.statusContainer}>
           <span
             style={{
               ...styles.statusDot,
-              backgroundColor: connected ? "#4ade80" : "#f87171",
+              backgroundColor: statusDisplay.color,
             }}
           />
-          <span style={connected ? styles.statusConnected : styles.statusDisconnected}>
-            {connected ? "Connected" : "Disconnected"}
+          <span style={{ ...styles.statusText, color: statusDisplay.color }}>
+            {statusDisplay.text}
           </span>
         </div>
       </header>
@@ -189,13 +252,17 @@ const styles: Record<string, React.CSSProperties> = {
     height: "10px",
     borderRadius: "50%",
   },
-  statusConnected: {
-    color: "#4ade80",
+  statusText: {
     fontSize: "14px",
   },
-  statusDisconnected: {
-    color: "#f87171",
-    fontSize: "14px",
+  disconnectedBanner: {
+    backgroundColor: "#7f1d1d",
+    color: "#fecaca",
+    padding: "12px 16px",
+    marginBottom: "16px",
+    borderRadius: "8px",
+    textAlign: "center",
+    fontWeight: "500",
   },
   content: {
     display: "flex",

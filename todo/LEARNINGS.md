@@ -154,3 +154,16 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Added an example in help output: `math run --no-ui` for discoverability
 - Tests for CLI flag transformations can be simple logic tests rather than full integration tests
 - The existing `ui: false` behavior in `loop.test.ts` (lines 539-561) already verifies the server is not started
+
+## connection-handling
+
+- Used a three-state `ConnectionState` type: "connecting" | "connected" | "disconnected" - clearer than a single boolean
+- Initial state is "connecting" to show a proper "Connecting..." message on first load
+- Reconnection uses `setTimeout` with 3-second interval in the `onclose` handler - simple and effective
+- The timer ref (`reconnectTimerRef`) must be cleared both on successful reconnect and component unmount
+- `useCallback` for the `connect` function ensures stable reference across re-renders and allows it to be in the dependency array of the useEffect
+- On reconnect, the server sends full history via the `history` message type - no client-side fetching needed
+- The history message handler uses `setLogs(message.logs)` (replace) not `setLogs(prev => [...prev, ...message.logs])` (append) - this is correct for reconnection
+- The disconnected banner uses a red background (`#7f1d1d`) with light red text (`#fecaca`) for visibility without being harsh
+- Consolidated `statusConnected`/`statusDisconnected` styles into a single `statusText` style - color is set dynamically based on state
+- `getStatusDisplay()` helper function maps connection state to color and text - keeps JSX clean
