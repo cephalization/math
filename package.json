@@ -1,0 +1,28 @@
+{
+  "name": "math",
+  "version": "0.1.0",
+  "description": "Multi-Agent Todo Harness - A light meta agent orchestration harness",
+  "type": "module",
+  "bin": {
+    "math": "./index.ts"
+  },
+  "scripts": {
+    "start": "bun index.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "multi-agent",
+    "todo",
+    "orchestration",
+    "bun"
+  ],
+  "license": "MIT"
+}
