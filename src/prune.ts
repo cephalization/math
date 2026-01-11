@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { readdirSync, statSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -43,4 +43,43 @@ export function findArtifacts(directory: string = process.cwd()): string[] {
   }
 
   return artifacts;
+}
+
+/**
+ * Result of a delete operation
+ */
+export interface DeleteResult {
+  /** Paths that were successfully deleted */
+  deleted: string[];
+  /** Paths that failed to delete with their error messages */
+  failed: { path: string; error: string }[];
+}
+
+/**
+ * Deletes the provided artifact paths.
+ *
+ * Handles errors gracefully - if a path fails to delete (e.g., permission denied),
+ * it continues with the remaining paths and reports the failure.
+ *
+ * @param paths - Array of absolute paths to delete
+ * @returns Summary of deleted paths and any failures
+ */
+export function deleteArtifacts(paths: string[]): DeleteResult {
+  const result: DeleteResult = {
+    deleted: [],
+    failed: [],
+  };
+
+  for (const path of paths) {
+    try {
+      rmSync(path, { recursive: true, force: true });
+      result.deleted.push(path);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown error";
+      result.failed.push({ path, error: errorMessage });
+    }
+  }
+
+  return result;
 }

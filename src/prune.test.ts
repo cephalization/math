@@ -1,6 +1,6 @@
 import { test, expect, beforeEach, afterEach } from "bun:test";
-import { findArtifacts } from "./prune";
-import { mkdirSync, rmSync } from "node:fs";
+import { findArtifacts, deleteArtifacts } from "./prune";
+import { mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const TEST_DIR = join(import.meta.dir, ".test-prune");
@@ -77,4 +77,70 @@ test("findArtifacts returns absolute paths", () => {
 
   expect(result).toHaveLength(1);
   expect(result[0]).toMatch(/^\//); // Starts with / (absolute path)
+});
+
+// deleteArtifacts tests
+
+test("deleteArtifacts deletes directories successfully", () => {
+  const dir1 = join(TEST_DIR, "todo-1-15-2025");
+  const dir2 = join(TEST_DIR, "todo-2-20-2025");
+  mkdirSync(dir1);
+  mkdirSync(dir2);
+
+  const result = deleteArtifacts([dir1, dir2]);
+
+  expect(result.deleted).toHaveLength(2);
+  expect(result.deleted).toContain(dir1);
+  expect(result.deleted).toContain(dir2);
+  expect(result.failed).toHaveLength(0);
+  expect(existsSync(dir1)).toBe(false);
+  expect(existsSync(dir2)).toBe(false);
+});
+
+test("deleteArtifacts deletes directories with contents", () => {
+  const dir = join(TEST_DIR, "todo-1-15-2025");
+  mkdirSync(dir);
+  Bun.write(join(dir, "file.txt"), "content");
+  mkdirSync(join(dir, "subdir"));
+  Bun.write(join(dir, "subdir", "nested.txt"), "nested content");
+
+  const result = deleteArtifacts([dir]);
+
+  expect(result.deleted).toHaveLength(1);
+  expect(result.failed).toHaveLength(0);
+  expect(existsSync(dir)).toBe(false);
+});
+
+test("deleteArtifacts returns empty arrays for empty input", () => {
+  const result = deleteArtifacts([]);
+
+  expect(result.deleted).toHaveLength(0);
+  expect(result.failed).toHaveLength(0);
+});
+
+test("deleteArtifacts handles non-existent paths gracefully", () => {
+  const nonExistent = join(TEST_DIR, "does-not-exist");
+
+  const result = deleteArtifacts([nonExistent]);
+
+  // rmSync with force: true doesn't throw for non-existent paths
+  expect(result.deleted).toHaveLength(1);
+  expect(result.failed).toHaveLength(0);
+});
+
+test("deleteArtifacts continues after a failure", () => {
+  const dir1 = join(TEST_DIR, "todo-1-15-2025");
+  const dir2 = join(TEST_DIR, "todo-2-20-2025");
+  mkdirSync(dir1);
+  mkdirSync(dir2);
+
+  // Delete first one manually to prove second still gets processed
+  rmSync(dir1, { recursive: true });
+
+  const result = deleteArtifacts([dir1, dir2]);
+
+  // Both should succeed since rmSync with force:true handles non-existent
+  expect(result.deleted).toHaveLength(2);
+  expect(result.failed).toHaveLength(0);
+  expect(existsSync(dir2)).toBe(false);
 });
