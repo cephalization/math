@@ -167,3 +167,15 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The disconnected banner uses a red background (`#7f1d1d`) with light red text (`#fecaca`) for visibility without being harsh
 - Consolidated `statusConnected`/`statusDisconnected` styles into a single `statusText` style - color is set dynamically based on state
 - `getStatusDisplay()` helper function maps connection state to color and text - keeps JSX clean
+
+## final-testing
+
+- All 87 existing unit tests pass - the test suite validates the core infrastructure
+- Manual testing approach: Create a test script using bun -e to verify server behavior programmatically
+- Test `--no-ui` by checking that "Web UI available at" message is NOT shown with `ui: false`
+- Test UI enabled by checking that "Web UI available at http://localhost:8314" IS shown with `ui: true`
+- WebSocket server tests verify: HTML served at /, WebSocket connected message, history message received
+- Multiple client test: Connect two WebSockets, verify both receive log entries and agent output when buffer is updated
+- Use different ports (8315, etc.) for test servers to avoid conflicts with the default port 8314
+- The `server.stop()` method cleanly shuts down the Bun server after tests
+- All Phase 5 tasks complete - the web UI integration is fully functional

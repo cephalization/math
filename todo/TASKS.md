@@ -121,5 +121,5 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### final-testing
 
 - content: Manually test the full flow: run `math run` with UI enabled, verify the web UI shows at localhost:8314, verify loop logs and agent output stream correctly in separate sections, verify multiple browser tabs show the same content, verify `--no-ui` disables the server. Fix any issues found.
-- status: pending
+- status: complete
 - dependencies: cli-option, connection-handling
