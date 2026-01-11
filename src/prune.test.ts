@@ -1,5 +1,5 @@
 import { test, expect, beforeEach, afterEach } from "bun:test";
-import { findArtifacts, deleteArtifacts } from "./prune";
+import { findArtifacts, deleteArtifacts, confirmPrune } from "./prune";
 import { mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -143,4 +143,32 @@ test("deleteArtifacts continues after a failure", () => {
   expect(result.deleted).toHaveLength(2);
   expect(result.failed).toHaveLength(0);
   expect(existsSync(dir2)).toBe(false);
+});
+
+// confirmPrune tests
+
+test("confirmPrune returns confirmed: true with force flag", async () => {
+  const paths = ["/some/path/todo-1-15-2025", "/some/path/todo-2-20-2025"];
+
+  const result = await confirmPrune(paths, { force: true });
+
+  expect(result.confirmed).toBe(true);
+  expect(result.paths).toEqual(paths);
+});
+
+test("confirmPrune returns confirmed: true with empty paths", async () => {
+  const result = await confirmPrune([]);
+
+  expect(result.confirmed).toBe(true);
+  expect(result.paths).toEqual([]);
+});
+
+test("confirmPrune returns paths even with force flag", async () => {
+  const paths = ["/a/todo-1-1-2025", "/b/todo-2-2-2025"];
+
+  const result = await confirmPrune(paths, { force: true });
+
+  expect(result.paths).toHaveLength(2);
+  expect(result.paths).toContain("/a/todo-1-1-2025");
+  expect(result.paths).toContain("/b/todo-2-2-2025");
 });

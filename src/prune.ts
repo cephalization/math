@@ -1,5 +1,6 @@
 import { readdirSync, statSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, basename } from "node:path";
+import { createInterface } from "node:readline/promises";
 
 /**
  * Pattern for backup directories created by `math iterate`
@@ -82,4 +83,64 @@ export function deleteArtifacts(paths: string[]): DeleteResult {
   }
 
   return result;
+}
+
+/**
+ * Result of a confirmation prompt
+ */
+export interface ConfirmationResult {
+  /** Whether the user confirmed the action */
+  confirmed: boolean;
+  /** The paths that were shown to the user */
+  paths: string[];
+}
+
+/**
+ * Shows an interactive confirmation prompt for pruning artifacts.
+ *
+ * Lists all artifacts that will be deleted and asks for user confirmation.
+ * If `force` is true, skips the prompt and returns confirmed: true.
+ *
+ * @param paths - Array of absolute paths to be deleted
+ * @param options - Configuration options
+ * @param options.force - If true, skip confirmation and return confirmed: true
+ * @returns Result indicating whether user confirmed and what paths were shown
+ */
+export async function confirmPrune(
+  paths: string[],
+  options: { force?: boolean } = {}
+): Promise<ConfirmationResult> {
+  // If force flag is set, skip confirmation
+  if (options.force) {
+    return { confirmed: true, paths };
+  }
+
+  // If no paths, nothing to confirm
+  if (paths.length === 0) {
+    return { confirmed: true, paths };
+  }
+
+  // Show what will be deleted
+  console.log("\nThe following artifacts will be deleted:\n");
+  for (const path of paths) {
+    console.log(`  - ${basename(path)}/`);
+  }
+  console.log();
+
+  // Ask for confirmation
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    const answer = await rl.question("Delete these artifacts? (y/N) ");
+    rl.close();
+
+    const confirmed = answer.toLowerCase() === "y";
+    return { confirmed, paths };
+  } catch {
+    rl.close();
+    return { confirmed: false, paths };
+  }
 }
