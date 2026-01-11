@@ -72,3 +72,15 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - `afterEach` with `server.stop()` ensures clean teardown between tests
 - WebSocket tests need proper timeout handling with Promise wrappers around event callbacks
 - Placeholder responses are simple - just return `new Response()` with appropriate headers/status
+
+## websocket-streaming
+
+- WebSocket data can hold unsubscribe functions directly - `{ id, unsubscribeLogs: (() => void) | null, unsubscribeOutput: (() => void) | null }`
+- When a client connects: (1) send connected message, (2) send history, (3) subscribe to buffer updates
+- History message includes both logs and output in a single `{ type: "history", logs: [], output: [] }` message
+- New entries are sent as individual `{ type: "log", entry }` or `{ type: "output", entry }` messages
+- On disconnect, must call the unsubscribe functions and set them to null to avoid memory leaks
+- Tests for WebSocket message timing can be flaky - avoid sequential `await receiveMessage()` calls across multiple sockets
+- Better pattern: collect all messages in arrays via `onmessage` handlers, then filter and assert after a small delay
+- Exported `WebSocketMessage` type for type-safe parsing in tests and future frontend code
+- The `BufferLogEntry` and `BufferAgentOutput` types needed to be imported from buffer.ts for the message types

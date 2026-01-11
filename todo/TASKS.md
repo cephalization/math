@@ -61,7 +61,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### websocket-streaming
 
 - content: Implement WebSocket logic in `src/ui/server.ts`. When a client connects, immediately send the full history from the output buffer (both loop logs and agent output). Subscribe to buffer updates and broadcast new entries to all connected clients. Handle client disconnection gracefully by unsubscribing from buffer updates.
-- status: pending
+- status: complete
 - dependencies: bun-server, stream-capture
 
 ---

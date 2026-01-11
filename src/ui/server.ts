@@ -4,7 +4,7 @@
  */
 
 import type { ServerWebSocket } from "bun";
-import type { OutputBuffer } from "./buffer";
+import type { OutputBuffer, BufferLogEntry, BufferAgentOutput } from "./buffer";
 
 /**
  * Options for starting the UI server.
@@ -24,7 +24,18 @@ export const DEFAULT_PORT = 8314;
  */
 interface WebSocketData {
   id: string;
+  unsubscribeLogs: (() => void) | null;
+  unsubscribeOutput: (() => void) | null;
 }
+
+/**
+ * WebSocket message types for client communication.
+ */
+export type WebSocketMessage =
+  | { type: "connected"; id: string }
+  | { type: "history"; logs: BufferLogEntry[]; output: BufferAgentOutput[] }
+  | { type: "log"; entry: BufferLogEntry }
+  | { type: "output"; entry: BufferAgentOutput };
 
 /**
  * Start the UI web server.
@@ -52,7 +63,7 @@ export function startServer(options: ServerOptions) {
       if (url.pathname === "/ws") {
         const id = crypto.randomUUID();
         const success = server.upgrade(req, {
-          data: { id },
+          data: { id, unsubscribeLogs: null, unsubscribeOutput: null },
         });
         if (success) {
           return undefined;
@@ -66,16 +77,44 @@ export function startServer(options: ServerOptions) {
 
     websocket: {
       open(ws: ServerWebSocket<WebSocketData>) {
-        // Placeholder: will send history and subscribe to updates in websocket-streaming task
+        // Send connected message
         ws.send(JSON.stringify({ type: "connected", id: ws.data.id }));
+
+        // Send full history
+        const historyMessage: WebSocketMessage = {
+          type: "history",
+          logs: buffer.getLogs(),
+          output: buffer.getOutput(),
+        };
+        ws.send(JSON.stringify(historyMessage));
+
+        // Subscribe to new log entries and broadcast to this client
+        ws.data.unsubscribeLogs = buffer.subscribeLogs((entry) => {
+          const message: WebSocketMessage = { type: "log", entry };
+          ws.send(JSON.stringify(message));
+        });
+
+        // Subscribe to new agent output and broadcast to this client
+        ws.data.unsubscribeOutput = buffer.subscribeOutput((entry) => {
+          const message: WebSocketMessage = { type: "output", entry };
+          ws.send(JSON.stringify(message));
+        });
       },
 
       message(ws: ServerWebSocket<WebSocketData>, message: string | Buffer) {
-        // Placeholder: no client-to-server messages needed yet
+        // No client-to-server messages needed yet
       },
 
       close(ws: ServerWebSocket<WebSocketData>) {
-        // Placeholder: will unsubscribe from buffer updates in websocket-streaming task
+        // Unsubscribe from buffer updates
+        if (ws.data.unsubscribeLogs) {
+          ws.data.unsubscribeLogs();
+          ws.data.unsubscribeLogs = null;
+        }
+        if (ws.data.unsubscribeOutput) {
+          ws.data.unsubscribeOutput();
+          ws.data.unsubscribeOutput = null;
+        }
       },
     },
   });

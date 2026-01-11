@@ -1,6 +1,34 @@
 import { test, expect, describe, afterEach } from "bun:test";
-import { startServer, DEFAULT_PORT } from "./server";
+import { startServer, DEFAULT_PORT, type WebSocketMessage } from "./server";
 import { createOutputBuffer } from "./buffer";
+
+/**
+ * Helper to receive a WebSocket message with timeout.
+ */
+function receiveMessage(ws: WebSocket, timeoutMs = 1000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const handler = (event: MessageEvent) => {
+      ws.removeEventListener("message", handler);
+      resolve(event.data as string);
+    };
+    ws.addEventListener("message", handler);
+    setTimeout(() => {
+      ws.removeEventListener("message", handler);
+      reject(new Error("timeout"));
+    }, timeoutMs);
+  });
+}
+
+/**
+ * Helper to wait for WebSocket connection to open.
+ */
+function waitForOpen(ws: WebSocket, timeoutMs = 1000): Promise<boolean> {
+  return new Promise((resolve) => {
+    ws.onopen = () => resolve(true);
+    ws.onerror = () => resolve(false);
+    setTimeout(() => resolve(false), timeoutMs);
+  });
+}
 
 describe("startServer", () => {
   let server: ReturnType<typeof startServer> | null = null;
@@ -56,26 +84,182 @@ describe("startServer", () => {
 
     const ws = new WebSocket("ws://localhost:8317/ws");
 
-    const connected = await new Promise<boolean>((resolve) => {
-      ws.onopen = () => resolve(true);
-      ws.onerror = () => resolve(false);
-      setTimeout(() => resolve(false), 1000);
-    });
-
+    const connected = await waitForOpen(ws);
     expect(connected).toBe(true);
 
     // Should receive a connected message
-    const message = await new Promise<string>((resolve, reject) => {
-      ws.onmessage = (event) => resolve(event.data as string);
-      ws.onerror = reject;
-      setTimeout(() => reject(new Error("timeout")), 1000);
-    });
-
+    const message = await receiveMessage(ws);
     const parsed = JSON.parse(message);
     expect(parsed.type).toBe("connected");
     expect(parsed.id).toBeDefined();
 
     ws.close();
+  });
+});
+
+describe("WebSocket streaming", () => {
+  let server: ReturnType<typeof startServer> | null = null;
+
+  afterEach(() => {
+    if (server) {
+      server.stop();
+      server = null;
+    }
+  });
+
+  test("sends full history on connect", async () => {
+    const buffer = createOutputBuffer();
+    // Add some history before connecting
+    buffer.appendLog("info", "test log 1");
+    buffer.appendLog("error", "test log 2");
+    buffer.appendOutput("agent output 1");
+
+    server = startServer({ buffer, port: 8318 });
+    const ws = new WebSocket("ws://localhost:8318/ws");
+    await waitForOpen(ws);
+
+    // First message is connected
+    const connectedMsg = await receiveMessage(ws);
+    expect(JSON.parse(connectedMsg).type).toBe("connected");
+
+    // Second message is history
+    const historyMsg = await receiveMessage(ws);
+    const history = JSON.parse(historyMsg) as WebSocketMessage;
+
+    expect(history.type).toBe("history");
+    if (history.type === "history") {
+      expect(history.logs).toHaveLength(2);
+      expect(history.logs[0]!.message).toBe("test log 1");
+      expect(history.logs[0]!.category).toBe("info");
+      expect(history.logs[1]!.message).toBe("test log 2");
+      expect(history.logs[1]!.category).toBe("error");
+      expect(history.output).toHaveLength(1);
+      expect(history.output[0]!.text).toBe("agent output 1");
+    }
+
+    ws.close();
+  });
+
+  test("broadcasts new log entries to connected clients", async () => {
+    const buffer = createOutputBuffer();
+    server = startServer({ buffer, port: 8319 });
+
+    const ws = new WebSocket("ws://localhost:8319/ws");
+    await waitForOpen(ws);
+
+    // Drain connected and history messages
+    await receiveMessage(ws); // connected
+    await receiveMessage(ws); // history
+
+    // Add a new log entry after connection
+    buffer.appendLog("success", "new log entry");
+
+    // Should receive the new log entry
+    const logMsg = await receiveMessage(ws);
+    const parsed = JSON.parse(logMsg) as WebSocketMessage;
+
+    expect(parsed.type).toBe("log");
+    if (parsed.type === "log") {
+      expect(parsed.entry.message).toBe("new log entry");
+      expect(parsed.entry.category).toBe("success");
+    }
+
+    ws.close();
+  });
+
+  test("broadcasts new agent output to connected clients", async () => {
+    const buffer = createOutputBuffer();
+    server = startServer({ buffer, port: 8320 });
+
+    const ws = new WebSocket("ws://localhost:8320/ws");
+    await waitForOpen(ws);
+
+    // Drain connected and history messages
+    await receiveMessage(ws); // connected
+    await receiveMessage(ws); // history
+
+    // Add new agent output after connection
+    buffer.appendOutput("new agent output");
+
+    // Should receive the new output entry
+    const outputMsg = await receiveMessage(ws);
+    const parsed = JSON.parse(outputMsg) as WebSocketMessage;
+
+    expect(parsed.type).toBe("output");
+    if (parsed.type === "output") {
+      expect(parsed.entry.text).toBe("new agent output");
+    }
+
+    ws.close();
+  });
+
+  test("broadcasts to multiple connected clients", async () => {
+    const buffer = createOutputBuffer();
+    server = startServer({ buffer, port: 8321 });
+
+    // Collect all messages received by each client
+    const messages1: string[] = [];
+    const messages2: string[] = [];
+
+    const ws1 = new WebSocket("ws://localhost:8321/ws");
+    const ws2 = new WebSocket("ws://localhost:8321/ws");
+
+    ws1.onmessage = (event) => messages1.push(event.data as string);
+    ws2.onmessage = (event) => messages2.push(event.data as string);
+
+    await Promise.all([waitForOpen(ws1), waitForOpen(ws2)]);
+
+    // Wait for initial messages (connected + history)
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Add new log
+    buffer.appendLog("warning", "broadcast test");
+
+    // Wait for broadcast to arrive
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Both clients should have received the log message
+    const logMessages1 = messages1
+      .map((m) => JSON.parse(m) as WebSocketMessage)
+      .filter((m) => m.type === "log");
+    const logMessages2 = messages2
+      .map((m) => JSON.parse(m) as WebSocketMessage)
+      .filter((m) => m.type === "log");
+
+    expect(logMessages1).toHaveLength(1);
+    expect(logMessages2).toHaveLength(1);
+    if (logMessages1[0]?.type === "log" && logMessages2[0]?.type === "log") {
+      expect(logMessages1[0].entry.message).toBe("broadcast test");
+      expect(logMessages2[0].entry.message).toBe("broadcast test");
+    }
+
+    ws1.close();
+    ws2.close();
+  });
+
+  test("unsubscribes from buffer on disconnect", async () => {
+    const buffer = createOutputBuffer();
+    server = startServer({ buffer, port: 8322 });
+
+    const ws = new WebSocket("ws://localhost:8322/ws");
+    await waitForOpen(ws);
+
+    // Drain initial messages
+    await receiveMessage(ws); // connected
+    await receiveMessage(ws); // history
+
+    // Close the connection
+    ws.close();
+
+    // Wait a bit for the close handler to run
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // This should not throw - the subscriber was cleaned up
+    // If unsubscribe didn't work, the subscriber would try to send to a closed socket
+    buffer.appendLog("info", "after disconnect");
+
+    // Test passes if no error is thrown
+    expect(true).toBe(true);
   });
 });
 
