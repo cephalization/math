@@ -61,6 +61,16 @@ export async function getDefaultBranch(): Promise<string> {
 }
 
 /**
+ * Create a new branch from the current HEAD.
+ * This is the simplest branching mode - just creates a branch off wherever you are.
+ *
+ * @param branchName - The name for the new branch
+ */
+export async function createBranchFromCurrent(branchName: string): Promise<void> {
+  await Bun.$`git checkout -b ${branchName}`.quiet();
+}
+
+/**
  * Create a new working branch from the default branch.
  * Fetches latest, checks out default branch, pulls, then creates new branch.
  *

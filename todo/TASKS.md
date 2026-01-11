@@ -49,7 +49,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### implement-current-branch-mode
 
 - content: Implement the `"current"` branch mode in `src/git.ts`. Create a new function `createBranchFromCurrent(branchName: string)` that creates a branch off the current HEAD without switching branches first. This is the simplest mode - just `git checkout -b <name>`.
-- status: pending
+- status: complete
 - dependencies: add-branch-name-generator
 
 ### implement-default-branch-mode

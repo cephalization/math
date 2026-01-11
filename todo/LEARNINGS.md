@@ -43,3 +43,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The function is pure/synchronous which makes it easy to test without mocking
 - Added `src/git.test.ts` for the new function - Phase 4 will expand this with more comprehensive tests
 - Server test port conflict (8314) continues to be a pre-existing flaky issue unrelated to git changes
+
+## implement-current-branch-mode
+
+- Created `createBranchFromCurrent(branchName: string)` function - the simplest of the three branch modes
+- Implementation is just one line: `await Bun.$`git checkout -b ${branchName}`.quiet()`
+- No logging needed for this function since it's a simple git operation; the caller (setupBranch in Phase 2) will handle logging
+- Skipped adding a unit test for this function because it directly calls `Bun.$` and proper mocking is scheduled for Phase 4 (add-git-module-tests)
+- The function takes a branch name as parameter (rather than generating it) to maintain separation of concerns - `generateBranchName` handles naming, `createBranchFromCurrent` handles git operations
+- Returns `Promise<void>` since the caller doesn't need the branch name back (they already have it)
