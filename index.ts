@@ -44,6 +44,7 @@ ${colors.bold}OPTIONS${colors.reset}
   ${colors.dim}--max-iterations <n>${colors.reset}    Safety limit (default: 100)
   ${colors.dim}--pause <seconds>${colors.reset}       Pause between iterations (default: 3)
   ${colors.dim}--no-plan${colors.reset}              Skip planning mode after init/iterate
+  ${colors.dim}--ui${colors.reset}                   Enable web UI server (run command only)
   ${colors.dim}--quick${colors.reset}                Skip clarifying questions in plan mode
   ${colors.dim}--force${colors.reset}                Skip confirmation prompts (prune)
 
@@ -62,6 +63,9 @@ ${colors.bold}EXAMPLES${colors.reset}
 
   ${colors.dim}# Run the agent loop${colors.reset}
   math run
+
+  ${colors.dim}# Run with web UI${colors.reset}
+  math run --ui
 
   ${colors.dim}# Check task status${colors.reset}
   math status
