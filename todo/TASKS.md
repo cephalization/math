@@ -39,7 +39,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-branch-name-generator
 
 - content: Create a `generateBranchName(taskId: string): string` function in `src/git.ts`. It should produce a branch name like `math/<truncated-task-id>` where task ID is truncated to ~20 chars max. Include timestamp suffix if needed for uniqueness.
-- status: pending
+- status: complete
 - dependencies: extract-git-helpers
 
 ---

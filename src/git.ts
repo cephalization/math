@@ -4,6 +4,27 @@
  */
 
 /**
+ * Generate a branch name from a task ID.
+ * Format: math/<truncated-task-id>-<timestamp>
+ *
+ * @param taskId - The task identifier to base the branch name on
+ * @returns A valid git branch name
+ */
+export function generateBranchName(taskId: string): string {
+  // Truncate task ID to ~20 chars max
+  const truncatedId = taskId.slice(0, 20);
+
+  // Add short timestamp suffix for uniqueness (YYYYMMDDHHmmss)
+  const now = new Date();
+  const timestamp = now
+    .toISOString()
+    .replace(/[-:T.]/g, "")
+    .slice(0, 14); // YYYY-MM-DDTHH:mm:ss.sssZ -> YYYYMMDDHHmmss (14 chars)
+
+  return `math/${truncatedId}-${timestamp}`;
+}
+
+/**
  * Logger interface for git operations.
  */
 export interface Loggers {

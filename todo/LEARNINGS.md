@@ -33,3 +33,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Fixed a pre-existing test failure in `loop.test.ts` - the test expected "Skipping git branch creation" message but that code was commented out; updated test to remove this incorrect expectation
 - The server test port conflict (port 8314) is unrelated to this task and occurs intermittently when a server from a previous run is still holding the port
 - When importing from a new module, first remove the local definitions, then add the import to avoid "conflicts with local declaration" TypeScript errors
+
+## add-branch-name-generator
+
+- Created `generateBranchName(taskId: string)` function that produces branch names like `math/<task-id>-<timestamp>`
+- Timestamp format is `YYYYMMDDHHmmss` (14 chars) for uniqueness without being too verbose
+- Gotcha: `Date.toISOString()` includes a `.` before milliseconds - need to strip it with `.replace(/[-:T.]/g, "")` not just `[-:T]`
+- Task ID truncation at 20 chars keeps branch names readable while accommodating longer IDs
+- The function is pure/synchronous which makes it easy to test without mocking
+- Added `src/git.test.ts` for the new function - Phase 4 will expand this with more comprehensive tests
+- Server test port conflict (8314) continues to be a pre-existing flaky issue unrelated to git changes
