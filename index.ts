@@ -5,6 +5,7 @@ import { run } from "./src/commands/run";
 import { status } from "./src/commands/status";
 import { iterate } from "./src/commands/iterate";
 import { plan } from "./src/commands/plan";
+import { prune } from "./src/commands/prune";
 import { DEFAULT_MODEL } from "./src/constants";
 
 // ANSI colors
@@ -35,6 +36,7 @@ ${colors.bold}COMMANDS${colors.reset}
   ${colors.cyan}run${colors.reset}       Start the agent loop until all tasks complete
   ${colors.cyan}status${colors.reset}    Show current task counts
   ${colors.cyan}iterate${colors.reset}   Backup todo/ and reset for a new sprint
+  ${colors.cyan}prune${colors.reset}     Delete backup artifacts (todo-M-D-Y directories)
   ${colors.cyan}help${colors.reset}      Show this help message
 
 ${colors.bold}OPTIONS${colors.reset}
@@ -43,6 +45,7 @@ ${colors.bold}OPTIONS${colors.reset}
   ${colors.dim}--pause <seconds>${colors.reset}       Pause between iterations (default: 3)
   ${colors.dim}--no-plan${colors.reset}              Skip planning mode after init/iterate
   ${colors.dim}--quick${colors.reset}                Skip clarifying questions in plan mode
+  ${colors.dim}--force${colors.reset}                Skip confirmation prompts (prune)
 
 ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Initialize and plan a new project${colors.reset}
@@ -115,6 +118,11 @@ async function main() {
         await iterate({
           skipPlan: !!options["no-plan"],
           model: options.model as string,
+        });
+        break;
+      case "prune":
+        await prune({
+          force: !!options.force,
         });
         break;
       case "help":
