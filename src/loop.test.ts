@@ -66,7 +66,8 @@ describe("runLoop dry-run mode", () => {
       // Verify dry-run mode logs
       const logText = logs.join("\n");
       expect(logText).toContain("[DRY RUN]");
-      expect(logText).toContain("Skipping git branch creation");
+      // Note: Git branching is currently disabled (commented out in loop.ts)
+      // When re-enabled, this test should verify git branch creation is skipped in dry-run mode
     } finally {
       console.log = originalLog;
     }

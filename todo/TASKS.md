@@ -33,7 +33,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### extract-git-helpers
 
 - content: Extract git-related functions (`getDefaultBranch`, `createWorkingBranch`) into a new `src/git.ts` module. Export them for use by `loop.ts` and for testing. Keep the existing logic intact - just move it.
-- status: pending
+- status: complete
 - dependencies: add-branch-mode-type
 
 ### add-branch-name-generator

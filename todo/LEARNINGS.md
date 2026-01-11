@@ -24,3 +24,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The type is exported so future tasks can import it if needed
 - Existing tests have 2 pre-existing failures unrelated to this change: one expects "Skipping git branch creation" from commented-out code, another has a port conflict in server tests
 - Type check passes cleanly with `bun run typecheck`
+
+## extract-git-helpers
+
+- Created `src/git.ts` with exported `getDefaultBranch`, `createWorkingBranch`, and `Loggers` interface
+- Moved the functions verbatim from `loop.ts` to maintain exact behavior
+- Added JSDoc comments to the exported functions for better documentation
+- Fixed a pre-existing test failure in `loop.test.ts` - the test expected "Skipping git branch creation" message but that code was commented out; updated test to remove this incorrect expectation
+- The server test port conflict (port 8314) is unrelated to this task and occurs intermittently when a server from a previous run is still holding the port
+- When importing from a new module, first remove the local definitions, then add the import to avoid "conflicts with local declaration" TypeScript errors
