@@ -1,5 +1,5 @@
-import { test, expect } from "bun:test";
-import { generateBranchName } from "./git";
+import { test, expect, mock, spyOn } from "bun:test";
+import { generateBranchName, setupBranch, type Loggers } from "./git";
 
 test("generateBranchName produces math/ prefix", () => {
   const result = generateBranchName("my-task");
@@ -44,4 +44,22 @@ test("generateBranchName produces different names at different times", async () 
   const result2 = generateBranchName("task");
 
   expect(result1).not.toEqual(result2);
+});
+
+// Helper to create mock loggers
+function createMockLoggers(): Loggers {
+  return {
+    log: mock(() => {}),
+    logSuccess: mock(() => {}),
+    logWarning: mock(() => {}),
+    logError: mock(() => {}),
+  };
+}
+
+test("setupBranch returns undefined for 'none' mode", async () => {
+  const loggers = createMockLoggers();
+  const result = await setupBranch("none", "test-task", loggers);
+  
+  expect(result).toBeUndefined();
+  expect(loggers.log).toHaveBeenCalledWith("Branch mode: none - working on current branch");
 });

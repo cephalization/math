@@ -6,7 +6,10 @@ import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
 import type { Agent, LogCategory } from "./agent";
 import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
 import { startServer, DEFAULT_PORT } from "./ui/server";
-import { getDefaultBranch, createBranchFromDefault, type Loggers } from "./git";
+import { getDefaultBranch, createBranchFromDefault, setupBranch, type Loggers, type BranchMode } from "./git";
+
+// Re-export BranchMode for consumers of loop.ts
+export type { BranchMode };
 
 const colors = {
   reset: "\x1b[0m",
@@ -17,14 +20,6 @@ const colors = {
   yellow: "\x1b[33m",
   blue: "\x1b[34m",
 };
-
-/**
- * Branch mode determines how the loop creates working branches.
- * - "current": Create a branch from the current HEAD (simplest)
- * - "default": Fetch and branch from the default branch (main/master)
- * - "none": Skip branching entirely, work on current branch
- */
-export type BranchMode = "current" | "default" | "none";
 
 export interface LoopOptions {
   model?: string;

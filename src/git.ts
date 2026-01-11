@@ -103,3 +103,45 @@ export async function createBranchFromDefault(branchName: string, loggers: Logge
   log(`Creating branch: ${branchName}`);
   await Bun.$`git checkout -b ${branchName}`.quiet();
 }
+
+/**
+ * Branch mode determines how the loop creates working branches.
+ * - "current": Create a branch from the current HEAD (simplest)
+ * - "default": Fetch and branch from the default branch (main/master)
+ * - "none": Skip branching entirely, work on current branch
+ */
+export type BranchMode = "current" | "default" | "none";
+
+/**
+ * Set up a branch based on the specified mode.
+ * This is the unified entry point for all branching operations.
+ *
+ * @param mode - The branching mode to use
+ * @param taskId - The task ID to generate a branch name from
+ * @param loggers - Logger functions for status messages
+ * @returns The branch name if a branch was created, undefined for "none" mode
+ */
+export async function setupBranch(
+  mode: BranchMode,
+  taskId: string,
+  loggers: Loggers
+): Promise<string | undefined> {
+  const { log } = loggers;
+
+  if (mode === "none") {
+    log("Branch mode: none - working on current branch");
+    return undefined;
+  }
+
+  const branchName = generateBranchName(taskId);
+
+  if (mode === "current") {
+    log(`Branch mode: current - creating branch from HEAD`);
+    await createBranchFromCurrent(branchName);
+  } else if (mode === "default") {
+    log(`Branch mode: default - creating branch from default branch`);
+    await createBranchFromDefault(branchName, loggers);
+  }
+
+  return branchName;
+}

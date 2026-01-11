@@ -61,7 +61,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### implement-none-branch-mode
 
 - content: The `"none"` mode requires no new git functions - it just skips branching. This task is to create a unified `setupBranch(mode: BranchMode, taskId: string, loggers: Loggers): Promise<string | undefined>` function in `src/git.ts` that dispatches to the correct implementation based on mode.
-- status: pending
+- status: complete
 - dependencies: implement-default-branch-mode
 
 ---

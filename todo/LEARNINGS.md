@@ -62,3 +62,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Kept all the fetch/checkout/pull logic intact - this is the key difference from `createBranchFromCurrent` (which just creates from HEAD)
 - Updated the import in `loop.ts` from `createWorkingBranch` to `createBranchFromDefault`
 - Server test failure (port 8314) is pre-existing and unrelated to this change
+
+## implement-none-branch-mode
+
+- Created `setupBranch(mode: BranchMode, taskId: string, loggers: Loggers): Promise<string | undefined>` as the unified entry point for all branching operations
+- Moved `BranchMode` type from `loop.ts` to `git.ts` since it's now part of the git module's public API
+- Added re-export `export type { BranchMode }` in `loop.ts` to maintain backward compatibility for consumers importing from loop
+- Return type is `string | undefined`: returns the branch name for "current"/"default" modes, `undefined` for "none" mode
+- The "none" mode requires no git operations - just logs a message and returns undefined
+- Added a simple test for the "none" mode dispatch using `mock()` for loggers - full test coverage deferred to Phase 4 (add-git-module-tests)
+- Pattern: when moving a type between modules, update imports first, then remove the local definition to get clear TypeScript errors
