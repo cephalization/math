@@ -108,3 +108,16 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Tests for React UI code focus on file content assertions rather than DOM testing - keeps tests simple and fast
 - The app renders two side-by-side sections ("Loop Status" and "Agent Output") per the task spec
 - Connection status indicator is a simple text span that changes color based on `connected` state
+
+## stream-display
+
+- Color mapping for log categories uses a simple `Record<LogCategory, string>` object - keeps colors co-located and typed
+- Terminal colors: blue (#60a5fa) for info, green (#4ade80) for success, yellow (#facc15) for warning, red (#f87171) for error
+- Both timestamp and category label get the same color - helps visually group the status level
+- Auto-scroll implemented with `useRef<HTMLDivElement>` for containers and `useEffect` hooks that trigger on `logs` and `output` state changes
+- Pattern: `containerRef.current.scrollTop = containerRef.current.scrollHeight` after null check
+- Visual connection indicator: added a status dot (10px circle) next to the text - uses green/red `backgroundColor` based on connection state
+- Preformatted agent output uses `<pre>` tag with `whiteSpace: "pre-wrap"` to preserve formatting while allowing line wrapping
+- Tests for UI code check file content for patterns rather than testing DOM rendering - simple and effective
+- When writing regex tests for multiline code, use simpler `toContain()` assertions instead of complex regex patterns
+- The `getCategoryColor` helper function provides a fallback color for unknown categories - defensive programming

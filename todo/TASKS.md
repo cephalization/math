@@ -83,7 +83,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### stream-display
 
 - content: Implement the streaming text display in `src/ui/app.tsx`. Render loop logs with colored timestamps matching the terminal colors (blue for info, green for success, yellow for warning, red for error). Render agent output as preformatted monospace text. Auto-scroll to bottom when new content arrives. Show a visual indicator for connection status.
-- status: pending
+- status: complete
 - dependencies: react-app-scaffold, websocket-streaming
 
 ---

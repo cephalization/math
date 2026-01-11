@@ -75,6 +75,96 @@ describe("app.tsx", () => {
   });
 });
 
+describe("stream-display features", () => {
+  test("defines category colors for all log types", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should define colors for all categories
+    expect(content).toContain("categoryColors");
+    expect(content).toContain("info:");
+    expect(content).toContain("success:");
+    expect(content).toContain("warning:");
+    expect(content).toContain("error:");
+  });
+
+  test("uses correct terminal colors for categories", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Blue for info
+    expect(content).toMatch(/info.*#60a5fa|#60a5fa.*info/i);
+    // Green for success
+    expect(content).toMatch(/success.*#4ade80|#4ade80.*success/i);
+    // Yellow for warning
+    expect(content).toMatch(/warning.*#facc15|#facc15.*warning/i);
+    // Red for error
+    expect(content).toMatch(/error.*#f87171|#f87171.*error/i);
+  });
+
+  test("has refs for auto-scroll containers", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should use refs for both containers
+    expect(content).toContain("logContainerRef");
+    expect(content).toContain("outputContainerRef");
+    expect(content).toContain("useRef<HTMLDivElement>");
+  });
+
+  test("implements auto-scroll on content changes", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should scroll to bottom on logs and output changes
+    expect(content).toContain("scrollTop");
+    expect(content).toContain("scrollHeight");
+    
+    // Should have useEffect hooks with appropriate dependencies
+    // The pattern: useEffect that uses logContainerRef and depends on [logs]
+    expect(content).toContain("logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight");
+    expect(content).toContain("}, [logs])");
+    
+    // The pattern: useEffect that uses outputContainerRef and depends on [output]
+    expect(content).toContain("outputContainerRef.current.scrollTop = outputContainerRef.current.scrollHeight");
+    expect(content).toContain("}, [output])");
+  });
+
+  test("renders preformatted monospace agent output", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should use <pre> tag for agent output
+    expect(content).toContain("<pre");
+    // Should have monospace font for output
+    expect(content).toContain("fontFamily: \"monospace\"");
+    // Should preserve whitespace
+    expect(content).toContain("pre-wrap");
+  });
+
+  test("has visual connection status indicator", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should have a status dot element
+    expect(content).toContain("statusDot");
+    // Should use different colors based on connection
+    expect(content).toContain("backgroundColor:");
+    // Should have a container for status
+    expect(content).toContain("statusContainer");
+  });
+
+  test("applies category color to timestamp and category label", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should apply color to timestamp
+    expect(content).toContain("getCategoryColor(log.category)");
+    // Should be used in style objects
+    expect(content).toMatch(/color:\s*getCategoryColor/);
+  });
+
+  test("imports LogCategory type", async () => {
+    const content = await Bun.file("./src/ui/app.tsx").text();
+    
+    // Should import LogCategory from agent
+    expect(content).toContain('import type { LogCategory } from "../agent"');
+  });
+});
+
 describe("WebSocketMessage type compatibility", () => {
   test("history message has correct structure", () => {
     const logs: BufferLogEntry[] = [
