@@ -33,7 +33,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### loop-dry-run
 
 - content: Create a dry-run mode for the loop that doesn't actually call an LLM. It should emit log messages and agent output events like the real loop, but without actually calling the LLM.
-- status: pending
+- status: complete
 - dependencies: mock-loop-interface
 
 ### output-buffer

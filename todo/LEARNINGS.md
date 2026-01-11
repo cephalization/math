@@ -28,3 +28,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - For tests, use `!` non-null assertions when accessing array elements after verifying length with `toHaveLength()`
 - The mock can be reconfigured mid-test using `configure()` method for testing different scenarios
 - Keep test mocks simple - just arrays of strings and basic config objects, no complex simulation
+
+## loop-dry-run
+
+- Added `dryRun` and `agent` options to `LoopOptions` interface
+- When `dryRun: true`, the loop skips git branch creation and uses MockAgent instead of OpenCodeAgent
+- The `agent` option allows injecting any Agent implementation for testing or custom behavior
+- Replaced `process.exit(1)` calls with `throw new Error()` for better testability
+- Tests need `pauseSeconds: 0` to avoid the 3-second default pause between iterations
+- TASKS.md format uses `###` (h3) for task IDs, not `##` (h2) - important for test fixtures
+- When testing agent invocation, need pending tasks - if all tasks complete, loop exits before calling agent
+- Event callbacks (onLog, onOutput) forward agent events to the loop's console.log and stdout

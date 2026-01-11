@@ -2,6 +2,8 @@ import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readTasks, countTasks, updateTaskStatus, writeTasks } from "./tasks";
 import { DEFAULT_MODEL } from "./constants";
+import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
+import type { Agent, LogCategory } from "./agent";
 
 const colors = {
   reset: "\x1b[0m",
@@ -17,6 +19,8 @@ export interface LoopOptions {
   model?: string;
   maxIterations?: number;
   pauseSeconds?: number;
+  dryRun?: boolean;
+  agent?: Agent;
 }
 
 function log(message: string) {
@@ -105,6 +109,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   const model = options.model || DEFAULT_MODEL;
   const maxIterations = options.maxIterations || 100;
   const pauseSeconds = options.pauseSeconds || 3;
+  const dryRun = options.dryRun || false;
 
   const todoDir = join(process.cwd(), "todo");
   const promptPath = join(todoDir, "PROMPT.md");
@@ -122,24 +127,50 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     );
   }
 
-  // Verify opencode is available
-  if (!(await checkOpenCode())) {
-    throw new Error(
-      "opencode not found in PATH.\n" +
-        "Install: curl -fsSL https://opencode.ai/install | bash\n" +
-        "See: https://opencode.ai/docs/cli/"
-    );
+  // Select agent: use provided agent, or mock for dry-run, or real agent
+  let agent: Agent;
+  if (options.agent) {
+    agent = options.agent;
+  } else if (dryRun) {
+    agent = new MockAgent({
+      logs: [
+        { category: "info", message: "[DRY RUN] Agent would process tasks" },
+        { category: "success", message: "[DRY RUN] Agent completed (simulated)" },
+      ],
+      output: ["[DRY RUN] No actual LLM call made\n"],
+      exitCode: 0,
+    });
+    log("[DRY RUN] Using mock agent - no LLM calls will be made");
+  } else {
+    agent = new OpenCodeAgent();
+    // Verify opencode is available (only for real agent)
+    if (!(await agent.isAvailable())) {
+      throw new Error(
+        "opencode not found in PATH.\n" +
+          "Install: curl -fsSL https://opencode.ai/install | bash\n" +
+          "See: https://opencode.ai/docs/cli/"
+      );
+    }
   }
 
-  // Create a new branch for this loop run
-  log("Setting up git branch...");
-  const branchName = await createWorkingBranch();
-  logSuccess(`Working on branch: ${branchName}`);
-  console.log();
+  // Create a new branch for this loop run (skip in dry-run mode)
+  let branchName: string | undefined;
+  if (!dryRun) {
+    log("Setting up git branch...");
+    branchName = await createWorkingBranch();
+    logSuccess(`Working on branch: ${branchName}`);
+    console.log();
+  } else {
+    log("[DRY RUN] Skipping git branch creation");
+    console.log();
+  }
 
   log("Starting math loop");
   log(`Model: ${model}`);
   log(`Max iterations: ${maxIterations}`);
+  if (dryRun) {
+    log("[DRY RUN] Mode enabled - no actual changes will be made");
+  }
   console.log();
 
   let iteration = 0;
@@ -150,7 +181,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     // Safety check
     if (iteration > maxIterations) {
       logError(`Exceeded max iterations (${maxIterations}). Stopping.`);
-      process.exit(1);
+      throw new Error(`Exceeded max iterations (${maxIterations})`);
     }
 
     log(`=== Iteration ${iteration} ===`);
@@ -173,7 +204,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     // Sanity check
     if (counts.total === 0) {
       logError("No tasks found in TASKS.md - check file format");
-      process.exit(1);
+      throw new Error("No tasks found in TASKS.md - check file format");
     }
 
     // Check for stuck in_progress tasks
@@ -188,10 +219,38 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     log("Invoking agent...");
 
     try {
-      // OpenCode run format: opencode run "message" -f file1 -f file2
-      const result = await Bun.$`opencode run -m ${model} \
-        "Read the attached PROMPT.md and TASKS.md files. Follow the instructions in PROMPT.md to complete the next pending task." \
-        -f todo/PROMPT.md -f todo/TASKS.md`;
+      const prompt =
+        "Read the attached PROMPT.md and TASKS.md files. Follow the instructions in PROMPT.md to complete the next pending task.";
+      const files = ["todo/PROMPT.md", "todo/TASKS.md"];
+
+      const result = await agent.run({
+        model,
+        prompt,
+        files,
+        events: {
+          onLog: (entry) => {
+            // Log agent events to console
+            switch (entry.category) {
+              case "info":
+                log(entry.message);
+                break;
+              case "success":
+                logSuccess(entry.message);
+                break;
+              case "warning":
+                logWarning(entry.message);
+                break;
+              case "error":
+                logError(entry.message);
+                break;
+            }
+          },
+          onOutput: (output) => {
+            // Print agent output to stdout
+            process.stdout.write(output.text);
+          },
+        },
+      });
 
       if (result.exitCode === 0) {
         logSuccess(`Agent completed iteration ${iteration}`);
