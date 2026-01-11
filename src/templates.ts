@@ -94,8 +94,14 @@ Only commit AFTER tests pass.
 
 ## Quick Reference
 
+<!-- This table should be customized for your project's tooling -->
+<!-- Run 'math plan' to auto-detect and populate these commands -->
+
 | Action | Command |
 |--------|---------|
+| Run tests | \`<your-test-command>\` |
+| Build | \`<your-build-command>\` |
+| Lint | \`<your-lint-command>\` |
 | Stage all | \`git add -A\` |
 | Commit | \`git commit -m "feat: ..."\` |
 

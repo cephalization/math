@@ -14,11 +14,18 @@ const colors = {
 
 const PLAN_PROMPT = `You are a planning assistant helping to break down a project goal into actionable tasks.
 
-The user will describe their goal. Your job is to:
+## Step 1: Discover Project Tooling
 
-1. Ask clarifying questions if the goal is vague
-2. Break the goal into discrete, implementable tasks
-3. Update TASKS.md with well-structured tasks following this format:
+FIRST, examine the project to understand its technology stack:
+- Look for package.json, Cargo.toml, go.mod, pyproject.toml, Makefile, etc.
+- Identify the test runner (e.g., bun test, npm test, cargo test, pytest, go test)
+- Identify the build system (e.g., bun build, npm run build, cargo build, make)
+- Identify the linter/formatter (e.g., eslint, prettier, rustfmt, black)
+- Note any existing scripts or commands defined in the project
+
+## Step 2: Plan the Tasks
+
+Break the user's goal into discrete, implementable tasks using this format:
 
 ### task-id
 - content: Clear description of what to implement
@@ -31,8 +38,25 @@ Guidelines:
 - Order tasks logically with proper dependencies
 - Group related tasks into phases with markdown headers
 - Each task should have a clear, testable outcome
+- Reference the PROJECT'S test/build commands, not generic ones
 
-After updating TASKS.md, briefly summarize what you've planned.`;
+## Step 3: Update PROMPT.md Quick Reference
+
+Update the "Quick Reference" table in PROMPT.md with project-specific commands:
+- Replace generic commands with the actual commands for THIS project
+- Include test, build, lint, and any other relevant commands
+- Keep the table format intact
+
+Example transformations:
+- "bun test" -> project's actual test command
+- "npm run build" -> project's actual build command
+
+## Step 4: Summarize
+
+After updating both files, briefly summarize:
+- What tasks were planned
+- What project tooling was discovered
+- Any assumptions made`;
 
 export async function runPlanningMode({
   todoDir,
