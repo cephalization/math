@@ -143,3 +143,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Removed parallel-unsafe UI server tests (port conflicts) - manual testing verifies the integration works
 - The `createOutputBuffer` import was changed from `type` to regular import since we now call the function directly
 - Pattern: `options.buffer ?? (uiEnabled ? createOutputBuffer() : undefined)` provides buffer when UI enabled without overriding user-provided buffer
+
+## cli-option
+
+- The `--no-ui` flag follows the existing `--no-plan` pattern in the codebase
+- CLI boolean flags like `--no-ui` are stored as `true` in the options object by `parseArgs()`
+- The transformation `ui: !options["no-ui"]` converts the flag to the `ui` option for `runLoop()`
+- When `--no-ui` is absent, `options["no-ui"]` is `undefined`, so `!undefined = true` (UI enabled by default)
+- Help text placement: added `--no-ui` near `--no-plan` to group similar negative flags together
+- Added an example in help output: `math run --no-ui` for discoverability
+- Tests for CLI flag transformations can be simple logic tests rather than full integration tests
+- The existing `ui: false` behavior in `loop.test.ts` (lines 539-561) already verifies the server is not started

@@ -105,7 +105,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### cli-option
 
 - content: Update `src/commands/run.ts` and `index.ts` to support a `--no-ui` flag that disables the web UI. Update the help text to document this option. Pass the flag through to runLoop.
-- status: pending
+- status: complete
 - dependencies: loop-integration
 
 ---

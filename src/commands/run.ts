@@ -9,5 +9,6 @@ export async function run(options: Record<string, string | boolean>) {
     pauseSeconds: typeof options.pause === "string" 
       ? parseInt(options.pause, 10) 
       : undefined,
+    ui: !options["no-ui"],
   });
 }
