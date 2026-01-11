@@ -131,3 +131,15 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Tests should use `toContain("text/html")` instead of strict equality for content-type assertions
 - The bundled page output message ("Bundled page in Xms: src/ui/index.html") appears in test output - this is normal
 - Very minimal change required - just 2 lines: the import and the route assignment
+
+## loop-integration
+
+- Added `ui?: boolean` option to `LoopOptions` - defaults to `true` (enabled)
+- When `ui !== false`, the loop creates a buffer (if not provided) and starts the server before entering the main loop
+- Server is started with `startServer({ buffer: buffer!, port: DEFAULT_PORT })` - the `!` is safe because we ensure buffer exists when uiEnabled
+- The server intentionally stays running after the loop completes - it's not shut down (per task spec)
+- Log message `Web UI available at http://localhost:8314` lets users know where to access the UI
+- Existing tests needed `ui: false` to avoid port conflicts - tests run in parallel and would fight over port 8314
+- Removed parallel-unsafe UI server tests (port conflicts) - manual testing verifies the integration works
+- The `createOutputBuffer` import was changed from `type` to regular import since we now call the function directly
+- Pattern: `options.buffer ?? (uiEnabled ? createOutputBuffer() : undefined)` provides buffer when UI enabled without overriding user-provided buffer

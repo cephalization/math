@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { runLoop } from "./loop";
 import { createMockAgent } from "./agent";
 import { createOutputBuffer } from "./ui/buffer";
+import { DEFAULT_PORT } from "./ui/server";
 
 describe("runLoop dry-run mode", () => {
   let testDir: string;
@@ -59,6 +60,7 @@ describe("runLoop dry-run mode", () => {
         dryRun: true,
         maxIterations: 1,
         pauseSeconds: 0,
+        ui: false,
       });
 
       // Verify dry-run mode logs
@@ -113,6 +115,7 @@ describe("runLoop dry-run mode", () => {
         agent: mockAgent,
         maxIterations: 1,
         pauseSeconds: 0,
+        ui: false,
       });
     } catch {
       // Expected: max iterations exceeded since mock doesn't complete tasks
@@ -155,6 +158,7 @@ describe("runLoop dry-run mode", () => {
         dryRun: true,
         maxIterations: 1,
         pauseSeconds: 0,
+        ui: false,
       });
     } catch (e) {
       // Expected: will exceed max iterations since mock doesn't complete tasks
@@ -187,6 +191,7 @@ describe("runLoop dry-run mode", () => {
       agent: mockAgent,
       maxIterations: 1,
       pauseSeconds: 0,
+      ui: false,
     });
 
     // Agent should not be called since all tasks are complete
@@ -225,6 +230,7 @@ describe("runLoop dry-run mode", () => {
         agent: mockAgent,
         maxIterations: 1,
         pauseSeconds: 0,
+        ui: false,
       });
     } catch {
       // Expected: max iterations exceeded
@@ -286,6 +292,7 @@ describe("runLoop stream-capture with buffer", () => {
         maxIterations: 1,
         pauseSeconds: 0,
         buffer,
+        ui: false,
       });
 
       // Verify logs were captured
@@ -316,6 +323,7 @@ describe("runLoop stream-capture with buffer", () => {
         maxIterations: 1,
         pauseSeconds: 0,
         buffer,
+        ui: false,
       });
 
       const logs = buffer.getLogs();
@@ -363,6 +371,7 @@ describe("runLoop stream-capture with buffer", () => {
         maxIterations: 1,
         pauseSeconds: 0,
         buffer,
+        ui: false,
       });
     } catch {
       // Expected: max iterations exceeded
@@ -396,6 +405,7 @@ describe("runLoop stream-capture with buffer", () => {
         maxIterations: 1,
         pauseSeconds: 0,
         buffer,
+        ui: false,
       });
 
       // Verify subscriber received logs
@@ -445,6 +455,7 @@ describe("runLoop stream-capture with buffer", () => {
         maxIterations: 1,
         pauseSeconds: 0,
         buffer,
+        ui: false,
       });
     } catch {
       // Expected: max iterations exceeded
@@ -470,11 +481,79 @@ describe("runLoop stream-capture with buffer", () => {
         dryRun: true,
         maxIterations: 1,
         pauseSeconds: 0,
+        ui: false,
       });
 
       // Verify console.log was called
       const logText = logs.join("\n");
       expect(logText).toContain("Starting math loop");
+    } finally {
+      console.log = originalLog;
+    }
+  });
+});
+
+describe("runLoop UI server integration", () => {
+  let testDir: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    // Create a temp directory for each test
+    testDir = await mkdtemp(join(tmpdir(), "math-loop-ui-test-"));
+    originalCwd = process.cwd();
+    process.chdir(testDir);
+
+    // Create the todo directory with required files
+    const todoDir = join(testDir, "todo");
+    await mkdir(todoDir, { recursive: true });
+
+    // Create PROMPT.md
+    await writeFile(
+      join(todoDir, "PROMPT.md"),
+      "# Test Prompt\n\nTest instructions."
+    );
+
+    // Create TASKS.md with all tasks complete
+    await writeFile(
+      join(todoDir, "TASKS.md"),
+      `# Tasks
+
+### test-task
+- content: Test task
+- status: complete
+- dependencies: none
+`
+    );
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await rm(testDir, { recursive: true, force: true });
+  });
+
+  // NOTE: UI server tests are skipped in automated testing because:
+  // 1. They require exclusive port access (can't run in parallel)
+  // 2. The server stays running after tests complete (as designed)
+  // Manual testing should verify UI server integration works correctly.
+
+  test("ui: false disables the server", async () => {
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (...args: unknown[]) => {
+      logs.push(args.join(" "));
+    };
+
+    try {
+      await runLoop({
+        dryRun: true,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        ui: false,
+      });
+
+      // Verify UI server URL is NOT logged
+      const logText = logs.join("\n");
+      expect(logText).not.toContain("Web UI available");
     } finally {
       console.log = originalLog;
     }

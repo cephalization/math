@@ -99,7 +99,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### loop-integration
 
 - content: Update `src/loop.ts` to optionally start the web UI server before entering the main loop. Add a `ui` option to LoopOptions (default: true). When enabled, start the server and log the URL. The server should remain running after the loop completes (don't shut it down).
-- status: pending
+- status: complete
 - dependencies: serve-html, websocket-streaming, stream-capture
 
 ### cli-option

@@ -4,7 +4,8 @@ import { readTasks, countTasks, updateTaskStatus, writeTasks } from "./tasks";
 import { DEFAULT_MODEL } from "./constants";
 import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
 import type { Agent, LogCategory } from "./agent";
-import type { OutputBuffer } from "./ui/buffer";
+import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
+import { startServer, DEFAULT_PORT } from "./ui/server";
 
 const colors = {
   reset: "\x1b[0m",
@@ -23,6 +24,8 @@ export interface LoopOptions {
   dryRun?: boolean;
   agent?: Agent;
   buffer?: OutputBuffer;
+  /** Enable web UI server (default: true) */
+  ui?: boolean;
 }
 
 /**
@@ -131,10 +134,19 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   const maxIterations = options.maxIterations || 100;
   const pauseSeconds = options.pauseSeconds || 3;
   const dryRun = options.dryRun || false;
-  const buffer = options.buffer;
+  const uiEnabled = options.ui !== false; // default: true
+
+  // Create or use provided buffer - needed for UI server
+  const buffer = options.buffer ?? (uiEnabled ? createOutputBuffer() : undefined);
 
   // Create loggers that write to both console and buffer
   const { log, logSuccess, logWarning, logError } = createLoggers(buffer);
+
+  // Start web UI server if enabled
+  if (uiEnabled) {
+    const server = startServer({ buffer: buffer!, port: DEFAULT_PORT });
+    log(`Web UI available at http://localhost:${DEFAULT_PORT}`);
+  }
 
   const todoDir = join(process.cwd(), "todo");
   const promptPath = join(todoDir, "PROMPT.md");
