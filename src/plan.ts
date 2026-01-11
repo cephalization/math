@@ -162,7 +162,7 @@ ${goal}`;
       const clarifyResult =
         await Bun.$`opencode run -m ${model} ${clarifyPrompt} -f ${tasksPath} -f ${promptPath} --title ${
           "Planning: " + goal.slice(0, 40)
-        }`.text();
+        }`.then((result) => result.text());
 
       const questions = parseQuestions(clarifyResult);
 
