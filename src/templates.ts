@@ -11,11 +11,13 @@ Implement ONE task from TASKS.md, test it, commit it, log your learnings, then E
 1. **Read TASKS.md** - Find the first task with \`status: pending\` where ALL dependencies have \`status: complete\`
 2. **Mark in_progress** - Update the task's status to \`in_progress\` in TASKS.md
 3. **Implement** - Write the code following the project's patterns
-4. **Test** - Run tests to verify your changes work
-5. **Mark complete** - Update the task's status to \`complete\` in TASKS.md
-6. **Log learnings** - Append insights to LEARNINGS.md
-7. **Commit** - Stage and commit: \`git add -A && git commit -m "feat: <task-id> - <description>"\`
-8. **EXIT** - Stop. The loop will reinvoke you for the next task.
+4. **Write tests** - For behavioral code changes, create unit tests in the appropriate directory. Skip for documentation-only tasks.
+5. **Run tests** - Execute tests from the package directory (ensures existing tests still pass)
+6. **Fix failures** - If tests fail, debug and fix. DO NOT PROCEED WITH FAILING TESTS.
+7. **Mark complete** - Update the task's status to \`complete\` in TASKS.md
+8. **Log learnings** - Append insights to LEARNINGS.md
+9. **Commit** - Stage and commit: \`git add -A && git commit -m "feat: <task-id> - <description>"\`
+10. **EXIT** - Stop. The loop will reinvoke you for the next task.
 
 ---
 
@@ -84,6 +86,8 @@ Only commit AFTER tests pass.
 - Don't add features "while you're here"
 - Don't refactor unrelated code
 - Don't add abstractions for "future flexibility"
+- Don't make perfect mocks in tests - use simple stubs instead
+- Don't use complex test setups - keep tests simple and focused
 - YAGNI: You Ain't Gonna Need It
 
 ---
@@ -92,7 +96,6 @@ Only commit AFTER tests pass.
 
 | Action | Command |
 |--------|---------|
-| Run tests | \`bun test\` |
 | Stage all | \`git add -A\` |
 | Commit | \`git commit -m "feat: ..."\` |
 
