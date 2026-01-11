@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { join } from "node:path";
+import { DEFAULT_MODEL } from "./constants";
 
 const colors = {
   reset: "\x1b[0m",
@@ -33,7 +34,15 @@ Guidelines:
 
 After updating TASKS.md, briefly summarize what you've planned.`;
 
-export async function runPlanningMode(todoDir: string): Promise<void> {
+export async function runPlanningMode({
+  todoDir,
+  options,
+}: {
+  todoDir: string;
+  options: { model?: string };
+}): Promise<void> {
+  const model = options.model || DEFAULT_MODEL;
+
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -41,22 +50,32 @@ export async function runPlanningMode(todoDir: string): Promise<void> {
 
   console.log();
   console.log(`${colors.magenta}${colors.bold}Planning Mode${colors.reset}`);
-  console.log(`${colors.dim}Let's break down your goal into actionable tasks.${colors.reset}`);
+  console.log(
+    `${colors.dim}Let's break down your goal into actionable tasks.${colors.reset}`
+  );
   console.log();
 
   try {
-    const goal = await rl.question(`${colors.cyan}What would you like to accomplish?${colors.reset}\n> `);
-    
+    const goal = await rl.question(
+      `${colors.cyan}What would you like to accomplish?${colors.reset}\n> `
+    );
+
     if (!goal.trim()) {
-      console.log(`${colors.yellow}No goal provided. Skipping planning.${colors.reset}`);
-      console.log(`You can run planning later with: ${colors.cyan}math plan${colors.reset}`);
+      console.log(
+        `${colors.yellow}No goal provided. Skipping planning.${colors.reset}`
+      );
+      console.log(
+        `You can run planning later with: ${colors.cyan}math plan${colors.reset}`
+      );
       return;
     }
 
     rl.close();
 
     console.log();
-    console.log(`${colors.dim}Invoking OpenCode to help plan your tasks...${colors.reset}`);
+    console.log(
+      `${colors.dim}Invoking OpenCode to help plan your tasks...${colors.reset}`
+    );
     console.log();
 
     const tasksPath = join(todoDir, "TASKS.md");
@@ -71,23 +90,34 @@ ${goal}
 
 Read the attached files and update TASKS.md with a well-structured task list for this goal.`;
 
-    const result = await Bun.$`opencode run ${fullPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`;
+    const result =
+      await Bun.$`opencode run -m ${model} ${fullPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`;
 
     if (result.exitCode === 0) {
       console.log();
       console.log(`${colors.green}✓${colors.reset} Planning complete!`);
       console.log();
       console.log(`${colors.bold}Next steps:${colors.reset}`);
-      console.log(`  1. Review ${colors.cyan}todo/TASKS.md${colors.reset} to verify the plan`);
-      console.log(`  2. Run ${colors.cyan}math run${colors.reset} to start executing tasks`);
+      console.log(
+        `  1. Review ${colors.cyan}todo/TASKS.md${colors.reset} to verify the plan`
+      );
+      console.log(
+        `  2. Run ${colors.cyan}math run${colors.reset} to start executing tasks`
+      );
     } else {
-      console.log(`${colors.yellow}Planning completed with warnings. Check todo/TASKS.md${colors.reset}`);
+      console.log(
+        `${colors.yellow}Planning completed with warnings. Check todo/TASKS.md${colors.reset}`
+      );
     }
   } catch (error) {
     rl.close();
     if ((error as Error).message?.includes("opencode")) {
-      console.log(`${colors.yellow}OpenCode not available. Skipping planning.${colors.reset}`);
-      console.log(`Install OpenCode: ${colors.cyan}curl -fsSL https://opencode.ai/install | bash${colors.reset}`);
+      console.log(
+        `${colors.yellow}OpenCode not available. Skipping planning.${colors.reset}`
+      );
+      console.log(
+        `Install OpenCode: ${colors.cyan}curl -fsSL https://opencode.ai/install | bash${colors.reset}`
+      );
     } else {
       throw error;
     }

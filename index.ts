@@ -5,6 +5,7 @@ import { run } from "./src/commands/run";
 import { status } from "./src/commands/status";
 import { iterate } from "./src/commands/iterate";
 import { plan } from "./src/commands/plan";
+import { DEFAULT_MODEL } from "./src/constants";
 
 // ANSI colors
 const colors = {
@@ -37,7 +38,7 @@ ${colors.bold}COMMANDS${colors.reset}
   ${colors.cyan}help${colors.reset}      Show this help message
 
 ${colors.bold}OPTIONS${colors.reset}
-  ${colors.dim}--model <model>${colors.reset}          Model to use (default: anthropic/claude-opus-4-20250514)
+  ${colors.dim}--model <model>${colors.reset}          Model to use (default: ${DEFAULT_MODEL})
   ${colors.dim}--max-iterations <n>${colors.reset}    Safety limit (default: 100)
   ${colors.dim}--pause <seconds>${colors.reset}       Pause between iterations (default: 3)
   ${colors.dim}--no-plan${colors.reset}              Skip planning mode after init/iterate
@@ -67,6 +68,7 @@ function parseArgs(args: string[]): Record<string, string | boolean> {
   const parsed: Record<string, string | boolean> = {};
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
+    if (!arg) continue;
     if (arg.startsWith("--")) {
       const key = arg.slice(2);
       const next = args[i + 1];
@@ -88,10 +90,13 @@ async function main() {
   try {
     switch (command) {
       case "init":
-        await init({ skipPlan: !!options["no-plan"] });
+        await init({
+          skipPlan: !!options["no-plan"],
+          model: options.model as string,
+        });
         break;
       case "plan":
-        await plan();
+        await plan(options);
         break;
       case "run":
         await run(options);
@@ -100,7 +105,10 @@ async function main() {
         await status();
         break;
       case "iterate":
-        await iterate({ skipPlan: !!options["no-plan"] });
+        await iterate({
+          skipPlan: !!options["no-plan"],
+          model: options.model as string,
+        });
         break;
       case "help":
       case "--help":
@@ -109,12 +117,18 @@ async function main() {
         printHelp();
         break;
       default:
-        console.error(`${colors.red}Unknown command: ${command}${colors.reset}`);
+        console.error(
+          `${colors.red}Unknown command: ${command}${colors.reset}`
+        );
         printHelp();
         process.exit(1);
     }
   } catch (error) {
-    console.error(`${colors.red}Error: ${error instanceof Error ? error.message : error}${colors.reset}`);
+    console.error(
+      `${colors.red}Error: ${error instanceof Error ? error.message : error}${
+        colors.reset
+      }`
+    );
     process.exit(1);
   }
 }

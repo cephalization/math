@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readTasks, countTasks, updateTaskStatus, writeTasks } from "./tasks";
+import { DEFAULT_MODEL } from "./constants";
 
 const colors = {
   reset: "\x1b[0m",
@@ -48,7 +49,7 @@ async function checkOpenCode(): Promise<boolean> {
 }
 
 export async function runLoop(options: LoopOptions = {}): Promise<void> {
-  const model = options.model || "anthropic/claude-opus-4-20250514";
+  const model = options.model || DEFAULT_MODEL;
   const maxIterations = options.maxIterations || 100;
   const pauseSeconds = options.pauseSeconds || 3;
 
@@ -58,18 +59,22 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
   // Check required files exist
   if (!existsSync(promptPath)) {
-    throw new Error(`PROMPT.md not found at ${promptPath}. Run 'math init' first.`);
+    throw new Error(
+      `PROMPT.md not found at ${promptPath}. Run 'math init' first.`
+    );
   }
   if (!existsSync(tasksPath)) {
-    throw new Error(`TASKS.md not found at ${tasksPath}. Run 'math init' first.`);
+    throw new Error(
+      `TASKS.md not found at ${tasksPath}. Run 'math init' first.`
+    );
   }
 
   // Verify opencode is available
   if (!(await checkOpenCode())) {
     throw new Error(
       "opencode not found in PATH.\n" +
-      "Install: curl -fsSL https://opencode.ai/install | bash\n" +
-      "See: https://opencode.ai/docs/cli/"
+        "Install: curl -fsSL https://opencode.ai/install | bash\n" +
+        "See: https://opencode.ai/docs/cli/"
     );
   }
 
@@ -95,7 +100,9 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     const { tasks, content } = await readTasks(todoDir);
     const counts = countTasks(tasks);
 
-    log(`Tasks: ${counts.complete}/${counts.total} complete, ${counts.in_progress} in progress, ${counts.pending} pending`);
+    log(
+      `Tasks: ${counts.complete}/${counts.total} complete, ${counts.in_progress} in progress, ${counts.pending} pending`
+    );
 
     // Check if all tasks are complete
     if (counts.total > 0 && counts.pending === 0 && counts.in_progress === 0) {
@@ -112,7 +119,9 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
     // Check for stuck in_progress tasks
     if (counts.in_progress > 0) {
-      logWarning(`Found ${counts.in_progress} task(s) marked in_progress from previous run`);
+      logWarning(
+        `Found ${counts.in_progress} task(s) marked in_progress from previous run`
+      );
       logWarning("Agent will handle or reset these");
     }
 
@@ -142,7 +151,9 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
         }
       }
     } catch (error) {
-      logError(`Error running agent: ${error instanceof Error ? error.message : error}`);
+      logError(
+        `Error running agent: ${error instanceof Error ? error.message : error}`
+      );
       // Continue anyway
     }
 
