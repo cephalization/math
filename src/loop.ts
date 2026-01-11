@@ -137,7 +137,8 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   const uiEnabled = options.ui !== false; // default: true
 
   // Create or use provided buffer - needed for UI server
-  const buffer = options.buffer ?? (uiEnabled ? createOutputBuffer() : undefined);
+  const buffer =
+    options.buffer ?? (uiEnabled ? createOutputBuffer() : undefined);
 
   // Create loggers that write to both console and buffer
   const { log, logSuccess, logWarning, logError } = createLoggers(buffer);
@@ -172,7 +173,10 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     agent = new MockAgent({
       logs: [
         { category: "info", message: "[DRY RUN] Agent would process tasks" },
-        { category: "success", message: "[DRY RUN] Agent completed (simulated)" },
+        {
+          category: "success",
+          message: "[DRY RUN] Agent completed (simulated)",
+        },
       ],
       output: ["[DRY RUN] No actual LLM call made\n"],
       exitCode: 0,
@@ -191,16 +195,16 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   }
 
   // Create a new branch for this loop run (skip in dry-run mode)
-  let branchName: string | undefined;
-  if (!dryRun) {
-    log("Setting up git branch...");
-    branchName = await createWorkingBranch({ log, logSuccess, logWarning, logError });
-    logSuccess(`Working on branch: ${branchName}`);
-    console.log();
-  } else {
-    log("[DRY RUN] Skipping git branch creation");
-    console.log();
-  }
+  // let branchName: string | undefined;
+  // if (!dryRun) {
+  //   log("Setting up git branch...");
+  //   branchName = await createWorkingBranch({ log, logSuccess, logWarning, logError });
+  //   logSuccess(`Working on branch: ${branchName}`);
+  //   console.log();
+  // } else {
+  //   log("[DRY RUN] Skipping git branch creation");
+  //   console.log();
+  // }
 
   log("Starting math loop");
   log(`Model: ${model}`);
