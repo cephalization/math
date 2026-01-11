@@ -45,7 +45,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### stream-capture
 
 - content: Modify `src/loop.ts` to capture stdout/stderr from the opencode subprocess and pipe it to the output buffer instead of letting it flow to the parent terminal. Use Bun's subprocess API to capture output streams. Continue to also call the existing log functions but have them write to the buffer. The console.log calls should still work for non-UI mode.
-- status: pending
+- status: complete
 - dependencies: output-buffer
 
 ---

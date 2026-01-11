@@ -50,3 +50,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The `clear()` method was added for buffer reset while keeping subscriptions intact
 - Tests verify that subscriptions continue working after clear() - important for reconnection scenarios
 - Kept the module simple with no dependencies beyond the LogCategory type - YAGNI principle
+
+## stream-capture
+
+- Added `buffer?: OutputBuffer` to `LoopOptions` - optional so non-UI mode continues to work unchanged
+- Used a factory function pattern `createLoggers(buffer?)` to create log functions that write to both console and buffer
+- The loggers are created at the start of `runLoop` and passed to `createWorkingBranch` via a `Loggers` interface
+- Agent output is captured in the `onOutput` event handler: writes to both `process.stdout` and `buffer?.appendOutput()`
+- The optional chaining (`buffer?.appendLog`) ensures graceful fallback when no buffer is provided
+- Console.log calls continue working for non-UI mode - the buffer is purely additive
+- Tests mock both `console.log` and `process.stdout.write` to verify output goes to both destinations
+- Buffer subscriptions work in real-time - subscribers receive entries as they are appended during loop execution

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runLoop } from "./loop";
 import { createMockAgent } from "./agent";
+import { createOutputBuffer } from "./ui/buffer";
 
 describe("runLoop dry-run mode", () => {
   let testDir: string;
@@ -231,5 +232,251 @@ describe("runLoop dry-run mode", () => {
 
     // Agent should be called at least once
     expect(callCount.value).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("runLoop stream-capture with buffer", () => {
+  let testDir: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    // Create a temp directory for each test
+    testDir = await mkdtemp(join(tmpdir(), "math-loop-test-"));
+    originalCwd = process.cwd();
+    process.chdir(testDir);
+
+    // Create the todo directory with required files
+    const todoDir = join(testDir, "todo");
+    await mkdir(todoDir, { recursive: true });
+
+    // Create PROMPT.md
+    await writeFile(
+      join(todoDir, "PROMPT.md"),
+      "# Test Prompt\n\nTest instructions."
+    );
+
+    // Create TASKS.md with all tasks complete
+    await writeFile(
+      join(todoDir, "TASKS.md"),
+      `# Tasks
+
+### test-task
+- content: Test task
+- status: complete
+- dependencies: none
+`
+    );
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await rm(testDir, { recursive: true, force: true });
+  });
+
+  test("loop logs are captured to buffer", async () => {
+    const buffer = createOutputBuffer();
+
+    // Suppress console output during test
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await runLoop({
+        dryRun: true,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        buffer,
+      });
+
+      // Verify logs were captured
+      const logs = buffer.getLogs();
+      expect(logs.length).toBeGreaterThan(0);
+
+      // Should have info logs
+      const infoLogs = logs.filter((l) => l.category === "info");
+      expect(infoLogs.length).toBeGreaterThan(0);
+
+      // Check for expected log messages
+      const messages = logs.map((l) => l.message);
+      expect(messages.some((m) => m.includes("Starting math loop"))).toBe(true);
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("loop success logs are captured with correct category", async () => {
+    const buffer = createOutputBuffer();
+
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await runLoop({
+        dryRun: true,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        buffer,
+      });
+
+      const logs = buffer.getLogs();
+      const successLogs = logs.filter((l) => l.category === "success");
+
+      // Should have success logs (tasks complete)
+      expect(successLogs.length).toBeGreaterThan(0);
+      expect(
+        successLogs.some((l) => l.message.includes("tasks complete"))
+      ).toBe(true);
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("agent output is captured to buffer", async () => {
+    // Use a pending task so the agent gets invoked
+    await writeFile(
+      join(testDir, "todo", "TASKS.md"),
+      `# Tasks
+
+### test-task
+- content: Test task
+- status: pending
+- dependencies: none
+`
+    );
+
+    const buffer = createOutputBuffer();
+    const mockAgent = createMockAgent({
+      logs: [{ category: "info", message: "Agent working" }],
+      output: ["Agent output text\n", "More output\n"],
+      exitCode: 0,
+    });
+
+    const originalLog = console.log;
+    const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+    console.log = () => {};
+    process.stdout.write = () => true;
+
+    try {
+      await runLoop({
+        dryRun: true,
+        agent: mockAgent,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        buffer,
+      });
+    } catch {
+      // Expected: max iterations exceeded
+    } finally {
+      console.log = originalLog;
+      process.stdout.write = originalStdoutWrite;
+    }
+
+    // Verify agent output was captured
+    const output = buffer.getOutput();
+    expect(output.length).toBe(2);
+    expect(output[0]!.text).toBe("Agent output text\n");
+    expect(output[1]!.text).toBe("More output\n");
+  });
+
+  test("buffer subscribers receive logs in real-time", async () => {
+    const buffer = createOutputBuffer();
+    const receivedLogs: string[] = [];
+
+    // Subscribe before running loop
+    buffer.subscribeLogs((entry) => {
+      receivedLogs.push(entry.message);
+    });
+
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await runLoop({
+        dryRun: true,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        buffer,
+      });
+
+      // Verify subscriber received logs
+      expect(receivedLogs.length).toBeGreaterThan(0);
+      expect(receivedLogs.some((m) => m.includes("Starting math loop"))).toBe(
+        true
+      );
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("buffer subscribers receive agent output in real-time", async () => {
+    await writeFile(
+      join(testDir, "todo", "TASKS.md"),
+      `# Tasks
+
+### test-task
+- content: Test task
+- status: pending
+- dependencies: none
+`
+    );
+
+    const buffer = createOutputBuffer();
+    const receivedOutput: string[] = [];
+
+    // Subscribe before running loop
+    buffer.subscribeOutput((output) => {
+      receivedOutput.push(output.text);
+    });
+
+    const mockAgent = createMockAgent({
+      output: ["Streamed output\n"],
+      exitCode: 0,
+    });
+
+    const originalLog = console.log;
+    const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+    console.log = () => {};
+    process.stdout.write = () => true;
+
+    try {
+      await runLoop({
+        dryRun: true,
+        agent: mockAgent,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        buffer,
+      });
+    } catch {
+      // Expected: max iterations exceeded
+    } finally {
+      console.log = originalLog;
+      process.stdout.write = originalStdoutWrite;
+    }
+
+    // Verify subscriber received output
+    expect(receivedOutput).toContain("Streamed output\n");
+  });
+
+  test("console.log still works without buffer", async () => {
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (...args: unknown[]) => {
+      logs.push(args.join(" "));
+    };
+
+    try {
+      // Run without buffer - console.log should still work
+      await runLoop({
+        dryRun: true,
+        maxIterations: 1,
+        pauseSeconds: 0,
+      });
+
+      // Verify console.log was called
+      const logText = logs.join("\n");
+      expect(logText).toContain("Starting math loop");
+    } finally {
+      console.log = originalLog;
+    }
   });
 });
