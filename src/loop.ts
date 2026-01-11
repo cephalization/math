@@ -191,7 +191,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
       // OpenCode run format: opencode run "message" -f file1 -f file2
       const result = await Bun.$`opencode run -m ${model} \
         "Read the attached PROMPT.md and TASKS.md files. Follow the instructions in PROMPT.md to complete the next pending task." \
-        -f todo/PROMPT.md -f todo/TASKS.md`.quiet();
+        -f todo/PROMPT.md -f todo/TASKS.md`;
 
       if (result.exitCode === 0) {
         logSuccess(`Agent completed iteration ${iteration}`);
