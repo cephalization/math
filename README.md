@@ -37,12 +37,17 @@ Creates a `todo/` directory with template files and offers to run **planning mod
 Options:
 
 - `--no-plan` - Skip the planning prompt
+- `--model <model>` - Model to use (default: `anthropic/claude-opus-4-5`)
 
 ### Plan your tasks
 
 ```bash
 math plan
 ```
+
+Options:
+
+- `--model <model>` - Model to use (default: `anthropic/claude-opus-4-5`)
 
 Interactively plan your tasks with AI assistance. Describe your goal and let OpenCode help break it down into well-structured tasks in `TASKS.md`.
 
@@ -54,7 +59,7 @@ math run
 
 Options:
 
-- `--model <model>` - Model to use (default: `anthropic/claude-opus-4-20250514`)
+- `--model <model>` - Model to use (default: `anthropic/claude-opus-4-5`)
 - `--max-iterations <n>` - Safety limit (default: 100)
 - `--pause <seconds>` - Pause between iterations (default: 3)
 
