@@ -136,16 +136,28 @@ export class OpenCodeAgent implements Agent {
         }
       );
 
-      // Read stdout and stderr as text
-      const stdoutText = await new Response(proc.stdout).text();
-      const stderrText = await new Response(proc.stderr).text();
+      // Stream stdout and stderr, emitting output as it arrives
+      const decoder = new TextDecoder();
 
-      if (stdoutText) {
-        emitOutput(stdoutText);
-      }
-      if (stderrText) {
-        emitOutput(stderrText);
-      }
+      const streamOutput = async (
+        stream: ReadableStream<Uint8Array> | null
+      ) => {
+        if (!stream) return;
+        const reader = stream.getReader();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const text = decoder.decode(value, { stream: true });
+            if (text) emitOutput(text);
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      };
+
+      // Read both streams concurrently while waiting for process to exit
+      await Promise.all([streamOutput(proc.stdout), streamOutput(proc.stderr)]);
 
       const exitCode = await proc.exited;
 
