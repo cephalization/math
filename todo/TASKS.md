@@ -22,104 +22,88 @@ Each agent picks the next pending task, implements it, and marks it complete.
 
 ---
 
-## Phase 1: Core Infrastructure
+## Phase 1: Core Branching Infrastructure
 
-### mock-loop-interface
+### add-branch-mode-type
 
-- content: For idempotent tests, that don't depend on LLM usage, create an "agent" interface that can be satisfied by opencode commands or a testing mock for the loop interface. It should emit log messages and agent output events like the real loop, without calling an underlying LLM.
+- content: Create a TypeScript type `BranchMode` with values `"current" | "default" | "none"` in `src/loop.ts`. Add `branchMode` to `LoopOptions` interface with default `"current"`. This establishes the configuration shape without changing behavior.
 - status: complete
 - dependencies: none
 
-### loop-dry-run
+### extract-git-helpers
 
-- content: Create a dry-run mode for the loop that doesn't actually call an LLM. It should emit log messages and agent output events like the real loop, but without actually calling the LLM.
-- status: complete
-- dependencies: mock-loop-interface
+- content: Extract git-related functions (`getDefaultBranch`, `createWorkingBranch`) into a new `src/git.ts` module. Export them for use by `loop.ts` and for testing. Keep the existing logic intact - just move it.
+- status: pending
+- dependencies: add-branch-mode-type
 
-### output-buffer
+### add-branch-name-generator
 
-- content: Create a shared output buffer module (`src/ui/buffer.ts`) that stores loop logs and agent output separately. Should export functions to append to each buffer, get full history, and subscribe to new entries. Use simple arrays and callback-based subscriptions. Include types for log entries with timestamps and categories (info, success, warning, error for loop; raw text for agent).
-- status: complete
-- dependencies: mock-loop-interface
-
-### stream-capture
-
-- content: Modify `src/loop.ts` to capture stdout/stderr from the opencode subprocess and pipe it to the output buffer instead of letting it flow to the parent terminal. Use Bun's subprocess API to capture output streams. Continue to also call the existing log functions but have them write to the buffer. The console.log calls should still work for non-UI mode.
-- status: complete
-- dependencies: output-buffer
+- content: Create a `generateBranchName(taskId: string): string` function in `src/git.ts`. It should produce a branch name like `math/<truncated-task-id>` where task ID is truncated to ~20 chars max. Include timestamp suffix if needed for uniqueness.
+- status: pending
+- dependencies: extract-git-helpers
 
 ---
 
-## Phase 2: Web Server
+## Phase 2: Implement Branch Modes
 
-### bun-server
+### implement-current-branch-mode
 
-- content: Create `src/ui/server.ts` that exports a function to start a Bun.serve() web server on port 8314. It should serve a single HTML page at "/" and provide a WebSocket endpoint at "/ws" for streaming updates. The server should accept the output buffer as a dependency. For now, just get the server structure in place with placeholder responses.
-- status: complete
-- dependencies: output-buffer
+- content: Implement the `"current"` branch mode in `src/git.ts`. Create a new function `createBranchFromCurrent(branchName: string)` that creates a branch off the current HEAD without switching branches first. This is the simplest mode - just `git checkout -b <name>`.
+- status: pending
+- dependencies: add-branch-name-generator
 
-### websocket-streaming
+### implement-default-branch-mode
 
-- content: Implement WebSocket logic in `src/ui/server.ts`. When a client connects, immediately send the full history from the output buffer (both loop logs and agent output). Subscribe to buffer updates and broadcast new entries to all connected clients. Handle client disconnection gracefully by unsubscribing from buffer updates.
-- status: complete
-- dependencies: bun-server, stream-capture
+- content: Implement the `"default"` branch mode. Update `createWorkingBranch` to accept a `branchName` parameter and use it instead of generating timestamp-based names. Keep the fetch/checkout default branch logic. Rename to `createBranchFromDefault(branchName: string, loggers: Loggers)`.
+- status: pending
+- dependencies: implement-current-branch-mode
 
----
+### implement-none-branch-mode
 
-## Phase 3: React Frontend
-
-### html-shell
-
-- content: Create `src/ui/index.html` with a basic HTML shell that loads a React app from `./app.tsx`. Include minimal inline styles for dark theme (dark background, light text). The HTML should have a div with id "root" for React to mount into.
-- status: complete
-- dependencies: none
-
-### react-app-scaffold
-
-- content: Create `src/ui/app.tsx` with a basic React app structure. Set up the WebSocket connection to "/ws", store received messages in state, and render two sections: "Loop Status" and "Agent Output". Use React 18's createRoot. Install react and react-dom as dependencies.
-- status: complete
-- dependencies: html-shell
-
-### stream-display
-
-- content: Implement the streaming text display in `src/ui/app.tsx`. Render loop logs with colored timestamps matching the terminal colors (blue for info, green for success, yellow for warning, red for error). Render agent output as preformatted monospace text. Auto-scroll to bottom when new content arrives. Show a visual indicator for connection status.
-- status: complete
-- dependencies: react-app-scaffold, websocket-streaming
+- content: The `"none"` mode requires no new git functions - it just skips branching. This task is to create a unified `setupBranch(mode: BranchMode, taskId: string, loggers: Loggers): Promise<string | undefined>` function in `src/git.ts` that dispatches to the correct implementation based on mode.
+- status: pending
+- dependencies: implement-default-branch-mode
 
 ---
 
-## Phase 4: Integration
+## Phase 3: Integration
 
-### serve-html
+### integrate-branching-in-loop
 
-- content: Update `src/ui/server.ts` to serve the `index.html` file at the "/" route using Bun's HTML imports feature. This allows Bun to automatically bundle the React app and handle hot module replacement in development.
-- status: complete
-- dependencies: html-shell, bun-server
+- content: Wire up `setupBranch` in `runLoop`. Uncomment and replace the old branching code. Get the first task ID from `readTasks` to pass to the branch name generator. Handle errors gracefully (log warning but continue if branching fails).
+- status: pending
+- dependencies: implement-none-branch-mode
 
-### loop-integration
+### add-cli-branch-flag
 
-- content: Update `src/loop.ts` to optionally start the web UI server before entering the main loop. Add a `ui` option to LoopOptions (default: true). When enabled, start the server and log the URL. The server should remain running after the loop completes (don't shut it down).
-- status: complete
-- dependencies: serve-html, websocket-streaming, stream-capture
+- content: Add `--branch <mode>` CLI flag to `index.ts` and pass it through `run.ts` to `runLoop`. Valid values: `current`, `default`, `none`. Default to `current` if not specified.
+- status: pending
+- dependencies: integrate-branching-in-loop
 
-### cli-option
+### update-help-text
 
-- content: Update `src/commands/run.ts` and `index.ts` to support a `--no-ui` flag that disables the web UI. Update the help text to document this option. Pass the flag through to runLoop.
-- status: complete
-- dependencies: loop-integration
+- content: Update the help text in `index.ts` to document the new `--branch` flag with examples for each mode.
+- status: pending
+- dependencies: add-cli-branch-flag
 
 ---
 
-## Phase 5: Polish
+## Phase 4: Testing
 
-### connection-handling
+### add-git-module-tests
 
-- content: Add robust connection handling to the frontend. When WebSocket disconnects, show a "Disconnected" banner and attempt to reconnect every 3 seconds. When reconnected, fetch full history again. Show "Connecting..." state on initial load.
-- status: complete
-- dependencies: stream-display
+- content: Create `src/git.test.ts` with tests for the git helper functions. Use spies/mocks for `Bun.$` to verify correct git commands are called WITHOUT actually running git. Test `generateBranchName` truncation logic, `setupBranch` dispatch for each mode.
+- status: pending
+- dependencies: update-help-text
 
-### final-testing
+### update-loop-tests-for-branching
 
-- content: Manually test the full flow: run `math run` with UI enabled, verify the web UI shows at localhost:8314, verify loop logs and agent output stream correctly in separate sections, verify multiple browser tabs show the same content, verify `--no-ui` disables the server. Fix any issues found.
-- status: complete
-- dependencies: cli-option, connection-handling
+- content: Update `src/loop.test.ts` to verify branching integration. Tests should mock the git module to avoid real git operations. Verify that `branchMode` option is respected and that the loop continues even if branching fails.
+- status: pending
+- dependencies: add-git-module-tests
+
+### verify-test-isolation
+
+- content: Run `bun test` and verify no tests modify the actual repo's git state. Check that tests use temp directories or mocks. If any test touches real git, fix it. Add a CI-safety comment in test files explaining the isolation approach.
+- status: pending
+- dependencies: update-loop-tests-for-branching

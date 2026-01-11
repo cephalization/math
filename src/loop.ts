@@ -17,6 +17,14 @@ const colors = {
   blue: "\x1b[34m",
 };
 
+/**
+ * Branch mode determines how the loop creates working branches.
+ * - "current": Create a branch from the current HEAD (simplest)
+ * - "default": Fetch and branch from the default branch (main/master)
+ * - "none": Skip branching entirely, work on current branch
+ */
+export type BranchMode = "current" | "default" | "none";
+
 export interface LoopOptions {
   model?: string;
   maxIterations?: number;
@@ -26,6 +34,8 @@ export interface LoopOptions {
   buffer?: OutputBuffer;
   /** Enable web UI server (default: true) */
   ui?: boolean;
+  /** Branch mode for creating working branches (default: "current") */
+  branchMode?: BranchMode;
 }
 
 /**
@@ -195,16 +205,21 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   }
 
   // Create a new branch for this loop run (skip in dry-run mode)
-  // let branchName: string | undefined;
-  // if (!dryRun) {
-  //   log("Setting up git branch...");
-  //   branchName = await createWorkingBranch({ log, logSuccess, logWarning, logError });
-  //   logSuccess(`Working on branch: ${branchName}`);
-  //   console.log();
-  // } else {
-  //   log("[DRY RUN] Skipping git branch creation");
-  //   console.log();
-  // }
+  let branchName: string | undefined;
+  if (!dryRun) {
+    log("Setting up git branch...");
+    branchName = await createWorkingBranch({
+      log,
+      logSuccess,
+      logWarning,
+      logError,
+    });
+    logSuccess(`Working on branch: ${branchName}`);
+    console.log();
+  } else {
+    log("[DRY RUN] Skipping git branch creation");
+    console.log();
+  }
 
   log("Starting math loop");
   log(`Model: ${model}`);
