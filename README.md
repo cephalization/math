@@ -48,8 +48,14 @@ math plan
 Options:
 
 - `--model <model>` - Model to use (default: `anthropic/claude-opus-4-5`)
+- `--quick` - Skip clarifying questions and generate plan immediately
 
-Interactively plan your tasks with AI assistance. Describe your goal and let OpenCode help break it down into well-structured tasks in `TASKS.md`.
+Interactively plan your tasks with AI assistance. The planner uses a two-phase approach:
+
+1. **Clarification phase**: The AI analyzes your goal and asks 3-5 clarifying questions
+2. **Planning phase**: Using your answers, it generates a well-structured task list
+
+Use `--quick` to skip the clarification phase if you want a faster, assumption-based plan.
 
 ### Run the agent loop
 
@@ -120,11 +126,13 @@ Tasks in `TASKS.md` follow this format:
 When you run `math init`, `math iterate`, or `math plan`, the harness can invoke [OpenCode](https://opencode.ai/docs/cli/) to help you plan:
 
 1. You describe your high-level goal
-2. OpenCode breaks it into discrete, implementable tasks
-3. Tasks are written to `TASKS.md` with proper dependencies
-4. You're ready to run `math run`
+2. OpenCode asks clarifying questions to understand your requirements
+3. You answer the questions interactively
+4. OpenCode breaks your goal into discrete, implementable tasks
+5. Tasks are written to `TASKS.md` with proper dependencies
+6. You're ready to run `math run`
 
-This bridges the gap between "I want to build X" and a structured task list.
+This bridges the gap between "I want to build X" and a structured task list. The clarifying questions phase uses OpenCode's session continuation feature to maintain context across the conversation.
 
 ## Signs (Guardrails)
 

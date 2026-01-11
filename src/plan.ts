@@ -12,6 +12,29 @@ const colors = {
   magenta: "\x1b[35m",
 };
 
+const CLARIFY_PROMPT = `You are a planning assistant. Before creating a task plan, you need to gather context.
+
+Analyze the user's goal and the project structure, then ask 3-5 clarifying questions that would help you create a better plan.
+
+Format your response EXACTLY like this:
+
+QUESTIONS:
+1. [Your first question]
+2. [Your second question]
+3. [Your third question]
+...
+
+Guidelines for questions:
+- Ask about ambiguous requirements
+- Ask about preferences (e.g., testing framework, code style)
+- Ask about scope and priorities
+- Ask about constraints or existing patterns to follow
+- Don't ask questions you can answer by examining the codebase
+
+If the goal is crystal clear and you have no questions, respond with:
+QUESTIONS:
+NONE`;
+
 const PLAN_PROMPT = `You are a planning assistant helping to break down a project goal into actionable tasks.
 
 ## Step 1: Discover Project Tooling
@@ -58,14 +81,37 @@ After updating both files, briefly summarize:
 - What project tooling was discovered
 - Any assumptions made`;
 
+/**
+ * Parse questions from the AI's response.
+ * Expects format: "QUESTIONS:\n1. Question one\n2. Question two\n..."
+ */
+function parseQuestions(output: string): string[] {
+  const questionsMatch = output.match(
+    /QUESTIONS:\s*([\s\S]*?)(?:$|(?=\n\n[A-Z]))/i
+  );
+  if (!questionsMatch?.[1]) return [];
+
+  const questionsBlock = questionsMatch[1].trim();
+  if (questionsBlock.toUpperCase() === "NONE") return [];
+
+  // Extract numbered questions
+  const questions = questionsBlock
+    .split(/\n/)
+    .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+    .filter((line) => line.length > 0);
+
+  return questions;
+}
+
 export async function runPlanningMode({
   todoDir,
   options,
 }: {
   todoDir: string;
-  options: { model?: string };
+  options: { model?: string; quick?: boolean };
 }): Promise<void> {
   const model = options.model || DEFAULT_MODEL;
+  const skipQuestions = options.quick || false;
 
   const rl = createInterface({
     input: process.stdin,
@@ -91,31 +137,81 @@ export async function runPlanningMode({
       console.log(
         `You can run planning later with: ${colors.cyan}math plan${colors.reset}`
       );
+      rl.close();
       return;
     }
-
-    rl.close();
-
-    console.log();
-    console.log(
-      `${colors.dim}Invoking OpenCode to help plan your tasks...${colors.reset}`
-    );
-    console.log();
 
     const tasksPath = join(todoDir, "TASKS.md");
     const promptPath = join(todoDir, "PROMPT.md");
     const learningsPath = join(todoDir, "LEARNINGS.md");
 
-    // Invoke opencode with planning prompt and goal
-    const fullPrompt = `${PLAN_PROMPT}
+    let clarifications = "";
+
+    // Phase 1: Gather clarifying questions (unless --quick)
+    if (!skipQuestions) {
+      console.log();
+      console.log(
+        `${colors.dim}Analyzing your goal and gathering context...${colors.reset}`
+      );
+
+      const clarifyPrompt = `${CLARIFY_PROMPT}
+
+USER'S GOAL:
+${goal}`;
+
+      const clarifyResult =
+        await Bun.$`opencode run -m ${model} ${clarifyPrompt} -f ${tasksPath} -f ${promptPath} --title ${
+          "Planning: " + goal.slice(0, 40)
+        }`.text();
+
+      const questions = parseQuestions(clarifyResult);
+
+      if (questions.length > 0) {
+        console.log();
+        console.log(
+          `${colors.cyan}${colors.bold}A few questions to help create a better plan:${colors.reset}`
+        );
+        console.log();
+
+        const answers: string[] = [];
+        for (let i = 0; i < questions.length; i++) {
+          const question = questions[i];
+          console.log(`${colors.bold}${i + 1}. ${question}${colors.reset}`);
+          const answer = await rl.question(`${colors.dim}> ${colors.reset}`);
+          answers.push(`Q: ${question}\nA: ${answer || "(skipped)"}`);
+          console.log();
+        }
+
+        clarifications = `
+CLARIFICATIONS FROM USER:
+${answers.join("\n\n")}`;
+      } else {
+        console.log(
+          `${colors.dim}No clarifying questions needed.${colors.reset}`
+        );
+      }
+    }
+
+    rl.close();
+
+    // Phase 2: Generate the plan (continue session if we asked questions)
+    console.log();
+    console.log(`${colors.dim}Generating task plan...${colors.reset}`);
+    console.log();
+
+    const planPrompt = `${PLAN_PROMPT}
 
 USER'S GOAL:
 ${goal}
+${clarifications}
 
 Read the attached files and update TASKS.md with a well-structured task list for this goal.`;
 
+    // If we asked questions, continue the session; otherwise start fresh
     const result =
-      await Bun.$`opencode run -m ${model} ${fullPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`;
+      !skipQuestions && clarifications
+        ? await Bun.$`opencode run -c -m ${model} ${planPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`
+        : await Bun.$`opencode run -m ${model} ${planPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`;
 
     if (result.exitCode === 0) {
       console.log();

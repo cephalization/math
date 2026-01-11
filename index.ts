@@ -42,6 +42,7 @@ ${colors.bold}OPTIONS${colors.reset}
   ${colors.dim}--max-iterations <n>${colors.reset}    Safety limit (default: 100)
   ${colors.dim}--pause <seconds>${colors.reset}       Pause between iterations (default: 3)
   ${colors.dim}--no-plan${colors.reset}              Skip planning mode after init/iterate
+  ${colors.dim}--quick${colors.reset}                Skip clarifying questions in plan mode
 
 ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Initialize and plan a new project${colors.reset}
@@ -52,6 +53,9 @@ ${colors.bold}EXAMPLES${colors.reset}
 
   ${colors.dim}# Run planning mode on existing todo/${colors.reset}
   math plan
+
+  ${colors.dim}# Quick planning without clarifying questions${colors.reset}
+  math plan --quick
 
   ${colors.dim}# Run the agent loop${colors.reset}
   math run
@@ -96,7 +100,10 @@ async function main() {
         });
         break;
       case "plan":
-        await plan(options);
+        await plan({
+          model: options.model as string | undefined,
+          quick: !!options.quick,
+        });
         break;
       case "run":
         await run(options);
