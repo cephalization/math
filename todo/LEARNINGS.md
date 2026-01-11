@@ -121,3 +121,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Tests for UI code check file content for patterns rather than testing DOM rendering - simple and effective
 - When writing regex tests for multiline code, use simpler `toContain()` assertions instead of complex regex patterns
 - The `getCategoryColor` helper function provides a fallback color for unknown categories - defensive programming
+
+## serve-html
+
+- Bun's HTML imports allow importing HTML files directly: `import indexHtml from "./index.html"`
+- The imported HTML file can be used directly in the `routes` object: `"/": indexHtml`
+- Bun automatically handles bundling the React app and HMR in development mode
+- When using Bun's HTML imports, the Content-Type header changes from `text/html` to `text/html;charset=utf-8`
+- Tests should use `toContain("text/html")` instead of strict equality for content-type assertions
+- The bundled page output message ("Bundled page in Xms: src/ui/index.html") appears in test output - this is normal
+- Very minimal change required - just 2 lines: the import and the route assignment

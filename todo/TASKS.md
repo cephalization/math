@@ -93,7 +93,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### serve-html
 
 - content: Update `src/ui/server.ts` to serve the `index.html` file at the "/" route using Bun's HTML imports feature. This allows Bun to automatically bundle the React app and handle hot module replacement in development.
-- status: pending
+- status: complete
 - dependencies: html-shell, bun-server
 
 ### loop-integration

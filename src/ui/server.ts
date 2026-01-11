@@ -6,6 +6,10 @@
 import type { ServerWebSocket } from "bun";
 import type { OutputBuffer, BufferLogEntry, BufferAgentOutput } from "./buffer";
 
+// Import HTML file using Bun's HTML imports feature
+// This allows Bun to automatically bundle the React app and handle HMR
+import indexHtml from "./index.html";
+
 /**
  * Options for starting the UI server.
  */
@@ -48,12 +52,9 @@ export function startServer(options: ServerOptions) {
     port,
 
     routes: {
-      "/": new Response(
-        "<html><body><h1>Math Agent UI</h1><p>Placeholder - React app coming soon</p></body></html>",
-        {
-          headers: { "Content-Type": "text/html" },
-        }
-      ),
+      // Serve the React app using Bun's HTML imports
+      // Bun automatically handles bundling and HMR in development
+      "/": indexHtml,
     },
 
     fetch(req, server) {

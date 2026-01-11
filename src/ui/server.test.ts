@@ -55,17 +55,18 @@ describe("startServer", () => {
     expect(server.port).toBe(9999);
   });
 
-  test("serves HTML placeholder at /", async () => {
+  test("serves HTML at /", async () => {
     const buffer = createOutputBuffer();
     server = startServer({ buffer, port: 8315 });
 
     const response = await fetch("http://localhost:8315/");
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe("text/html");
+    // Bun's HTML imports add charset to content-type
+    expect(response.headers.get("content-type")).toContain("text/html");
 
     const html = await response.text();
-    expect(html).toContain("<html>");
+    expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("Math Agent UI");
   });
 
