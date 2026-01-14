@@ -14,6 +14,20 @@ The primary responsibility of this harness is to **reduce context bloat** by dig
 
 The harness consists of a simple for-loop, executing a new coding agent with a mandate from `PROMPT.md` to complete a *single* task from `TASKS.md`, while reading and recording any insight gained during the work into `LEARNINGS.md`.
 
+## Requirements
+
+**[Bun](https://bun.sh) is required** to run this tool. Node.js is not supported.
+
+```bash
+# Install Bun (macOS, Linux, WSL)
+curl -fsSL https://bun.sh/install | bash
+```
+
+Why Bun?
+- This tool is written in TypeScript and uses Bun's native TypeScript execution (no compilation step)
+- The CLI uses a `#!/usr/bin/env bun` shebang for direct execution
+- Bun's speed makes the agent loop faster and more responsive
+
 ## Installation
 
 ### From npm (recommended)

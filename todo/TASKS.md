@@ -75,7 +75,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-readme-bun-requirement
 
 - content: Add a prominent "Requirements" section near the top of README.md stating that Bun is required to run this tool (not Node.js). Link to bun.sh for installation instructions. Explain why Bun is needed (TypeScript execution, shebang).
-- status: pending
+- status: complete
 - dependencies: update-readme-installation
 
 ---

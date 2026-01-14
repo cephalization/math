@@ -63,3 +63,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Kept `bunx` as the recommended method for one-off usage since it doesn't require global installation
 - Documentation-only changes don't require tests - verified existing tests still pass (with same pre-existing failure)
 - Pre-existing test failure (1 fail, 86 pass) confirmed to exist before changes via git stash verification
+
+## update-readme-bun-requirement
+
+- Placed the Requirements section between "Core Concept" and "Installation" - logical flow for users (understand tool -> check requirements -> install)
+- Used bold markdown + inline link for emphasis: `**[Bun](https://bun.sh) is required**` draws attention while making it easy to find install instructions
+- Included the one-liner install command since most users will need it - reduces friction
+- Listed three concrete reasons why Bun is needed: native TypeScript execution, shebang support, and speed
+- Pre-existing test failure (1 fail, 86 pass) still present - confirmed via git stash that it predates this change
