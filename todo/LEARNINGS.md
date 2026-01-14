@@ -55,3 +55,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The workflow triggers on both `push` to main and all `pull_request` events (any branch)
 - Steps are sequential (typecheck then test) since we want to fail fast on type errors before running tests
 - Pre-existing test failure (1 fail, 86 pass) still present - the "dry-run mode skips git operations" test expects a "Skipping git branch creation" message that isn't being logged
+
+## update-readme-installation
+
+- Split the Installation section into "From npm (recommended)" and "From source (for development)" subsections
+- Put npm installation first since most users will want to install from npm, not clone the repo
+- Kept `bunx` as the recommended method for one-off usage since it doesn't require global installation
+- Documentation-only changes don't require tests - verified existing tests still pass (with same pre-existing failure)
+- Pre-existing test failure (1 fail, 86 pass) confirmed to exist before changes via git stash verification

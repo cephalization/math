@@ -69,7 +69,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-readme-installation
 
 - content: Update README.md installation section to show npm installation methods: 1) `bunx @cephalization/math <command>` (recommended for one-off usage), 2) `bun install -g @cephalization/math` (global install). Keep the existing clone/link instructions for development.
-- status: pending
+- status: complete
 - dependencies: update-package-name
 
 ### update-readme-bun-requirement

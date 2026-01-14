@@ -16,8 +16,19 @@ The harness consists of a simple for-loop, executing a new coding agent with a m
 
 ## Installation
 
+### From npm (recommended)
+
 ```bash
-# Clone and link globally
+# One-off usage (recommended)
+bunx @cephalization/math <command>
+
+# Global install
+bun install -g @cephalization/math
+```
+
+### From source (for development)
+
+```bash
 git clone https://github.com/cephalization/math.git
 cd math
 bun install
