@@ -2,6 +2,7 @@
   "name": "@cephalization/math",
   "version": "0.1.0",
   "author": "Tony Powell <powell.anthonyd@proton.me>",
+  "access": "public",
   "repository": {
     "type": "git",
     "url": "https://github.com/cephalization/math"
