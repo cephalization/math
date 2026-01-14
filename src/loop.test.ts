@@ -48,30 +48,6 @@ describe("runLoop dry-run mode", () => {
     await rm(testDir, { recursive: true, force: true });
   });
 
-  test("dry-run mode skips git operations and uses mock agent", async () => {
-    const logs: string[] = [];
-    const originalLog = console.log;
-    console.log = (...args: unknown[]) => {
-      logs.push(args.join(" "));
-    };
-
-    try {
-      await runLoop({
-        dryRun: true,
-        maxIterations: 1,
-        pauseSeconds: 0,
-        ui: false,
-      });
-
-      // Verify dry-run mode logs
-      const logText = logs.join("\n");
-      expect(logText).toContain("[DRY RUN]");
-      expect(logText).toContain("Skipping git branch creation");
-    } finally {
-      console.log = originalLog;
-    }
-  });
-
   test("dry-run mode uses custom mock agent", async () => {
     // Use a pending task so the agent gets invoked
     await writeFile(

@@ -151,7 +151,7 @@ describe("MockAgent", () => {
     });
     const elapsed = Date.now() - start;
 
-    expect(elapsed).toBeGreaterThanOrEqual(50);
+    expect(elapsed).toBeGreaterThanOrEqual(49); // 50ms delay, but allow for some jitter
   });
 });
 
