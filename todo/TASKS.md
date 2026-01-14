@@ -59,7 +59,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-ci-workflow
 
 - content: Create `.github/workflows/ci.yml` that runs on all PRs and pushes. Jobs should: 1) Install dependencies with `bun install`, 2) Run typechecking with `bun run typecheck`, 3) Run tests with `bun test`. Use ubuntu-latest and setup-bun action.
-- status: pending
+- status: complete
 - dependencies: none
 
 ---
