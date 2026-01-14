@@ -30,3 +30,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Placed the `files` field after `bin` to keep package metadata grouped logically
 - The glob pattern `src/**/*.ts` ensures all TypeScript source files are included for consumers who want to inspect the source
 - Pre-existing test failure still present - documented by previous agent, unrelated to this change
+
+## init-changesets
+
+- Use `bunx @changesets/cli init` not `bunx changeset init` - the package name is `@changesets/cli`, not `changeset`
+- Changesets defaults to `"access": "restricted"` which won't work for scoped packages intended for public npm registry
+- Must change to `"access": "public"` in `.changeset/config.json` for scoped packages like `@cephalization/math`
+- The init creates two files: `config.json` (configuration) and `README.md` (documentation for contributors)
+- Pre-existing test failure (1 fail, 86 pass) is unrelated to changesets setup - documented by previous agents
