@@ -33,11 +33,11 @@ Why Bun?
 ### From npm (recommended)
 
 ```bash
-# One-off usage (recommended)
-bunx @cephalization/math <command>
-
-# Global install
+# Global install (recommended)
 bun install -g @cephalization/math
+
+# One-off usage 
+bunx @cephalization/math <command>
 ```
 
 ### From source (for development)
