@@ -27,7 +27,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-package-name
 
 - content: Update package.json to use scoped name `@cephalization/math` while keeping the binary name as `math`. Ensure the `bin` field points to `./index.ts` and the shebang `#!/usr/bin/env bun` is present in index.ts (already there, just verify).
-- status: pending
+- status: complete
 - dependencies: none
 
 ### add-files-field
