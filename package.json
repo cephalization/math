@@ -24,9 +24,11 @@
   "scripts": {
     "start": "bun index.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "changeset": "bunx changeset"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/bun": "latest",
     "typescript": "^5"
   },
