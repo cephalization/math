@@ -24,9 +24,22 @@ curl -fsSL https://bun.sh/install | bash
 ```
 
 Why Bun?
+
 - This tool is written in TypeScript and uses Bun's native TypeScript execution (no compilation step)
 - The CLI uses a `#!/usr/bin/env bun` shebang for direct execution
-- Bun's speed makes the agent loop faster and more responsive
+
+
+**[OpenCode](https://opencode.ai) is required** to run this tool.
+
+```bash
+# Install OpenCode
+curl -fsSL https://opencode.ai/install | bash
+```
+
+Why OpenCode?
+
+- OpenCode provides a consistent and reliable interface for running the agent loop
+- It supports many models, is easy to use, and is free to use
 
 ## Installation
 
@@ -93,6 +106,15 @@ Options:
 - `--model <model>` - Model to use (default: `anthropic/claude-opus-4-5`)
 - `--max-iterations <n>` - Safety limit (default: 100)
 - `--pause <seconds>` - Pause between iterations (default: 3)
+
+Iteratively run the agent loop until all tasks are complete. Each iteration will:
+
+- Read the `TASKS.md` file to find the next task to complete
+- Invoke the agent with the `PROMPT.md` file and the `TASKS.md` file
+- The agent will complete the task and update the `TASKS.md` file
+- The agent will log its learnings to the `LEARNINGS.md` file
+- The agent will commit the changes to the repository
+- The agent will exit
 
 ### Check status
 
@@ -178,7 +200,7 @@ Signs accumulate over time, making the agent increasingly reliable.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODEL`  | `anthropic/claude-opus-4-20250514` | Model to use |
+| `MODEL`  | `anthropic/claude-opus-4-5` | Model to use |
 
 ## Credits
 
