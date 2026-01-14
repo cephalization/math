@@ -49,7 +49,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-changeset-release-workflow
 
 - content: Create `.github/workflows/release.yml` that uses changesets/action to create "Version Packages" PRs and publish to npm on merge to main. Use `NPM_TOKEN` secret for authentication. Set up with bun for package installation.
-- status: pending
+- status: complete
 - dependencies: init-changesets
 
 ---

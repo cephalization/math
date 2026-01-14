@@ -38,3 +38,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Must change to `"access": "public"` in `.changeset/config.json` for scoped packages like `@cephalization/math`
 - The init creates two files: `config.json` (configuration) and `README.md` (documentation for contributors)
 - Pre-existing test failure (1 fail, 86 pass) is unrelated to changesets setup - documented by previous agents
+
+## add-changeset-release-workflow
+
+- The `changesets/action@v1` handles both creating "Version Packages" PRs and publishing to npm
+- Use `bunx changeset publish` and `bunx changeset version` for the publish and version commands to use bun
+- The workflow needs both `GITHUB_TOKEN` (for creating PRs) and `NPM_TOKEN` (for publishing) secrets
+- Added `concurrency` setting to prevent parallel runs on the same branch which could cause race conditions
+- The `oven-sh/setup-bun@v2` action sets up Bun in GitHub Actions - use v2 for latest features
+- Pre-existing test failure (1 fail, 86 pass) still present - unrelated to workflow changes
