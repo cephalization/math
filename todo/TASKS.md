@@ -22,104 +22,60 @@ Each agent picks the next pending task, implements it, and marks it complete.
 
 ---
 
-## Phase 1: Core Infrastructure
+## Phase 1: Package Configuration
 
-### mock-loop-interface
+### update-package-name
 
-- content: For idempotent tests, that don't depend on LLM usage, create an "agent" interface that can be satisfied by opencode commands or a testing mock for the loop interface. It should emit log messages and agent output events like the real loop, without calling an underlying LLM.
-- status: complete
+- content: Update package.json to use scoped name `@cephalization/math` while keeping the binary name as `math`. Ensure the `bin` field points to `./index.ts` and the shebang `#!/usr/bin/env bun` is present in index.ts (already there, just verify).
+- status: pending
 - dependencies: none
 
-### loop-dry-run
+### add-files-field
 
-- content: Create a dry-run mode for the loop that doesn't actually call an LLM. It should emit log messages and agent output events like the real loop, but without actually calling the LLM.
-- status: complete
-- dependencies: mock-loop-interface
-
-### output-buffer
-
-- content: Create a shared output buffer module (`src/ui/buffer.ts`) that stores loop logs and agent output separately. Should export functions to append to each buffer, get full history, and subscribe to new entries. Use simple arrays and callback-based subscriptions. Include types for log entries with timestamps and categories (info, success, warning, error for loop; raw text for agent).
-- status: complete
-- dependencies: mock-loop-interface
-
-### stream-capture
-
-- content: Modify `src/loop.ts` to capture stdout/stderr from the opencode subprocess and pipe it to the output buffer instead of letting it flow to the parent terminal. Use Bun's subprocess API to capture output streams. Continue to also call the existing log functions but have them write to the buffer. The console.log calls should still work for non-UI mode.
-- status: complete
-- dependencies: output-buffer
+- content: Add a `files` field to package.json specifying which files to include in the published package: `["index.ts", "src/**/*.ts", "README.md"]`. This ensures only necessary files are published.
+- status: pending
+- dependencies: update-package-name
 
 ---
 
-## Phase 2: Web Server
+## Phase 2: Changesets Setup
 
-### bun-server
+### init-changesets
 
-- content: Create `src/ui/server.ts` that exports a function to start a Bun.serve() web server on port 8314. It should serve a single HTML page at "/" and provide a WebSocket endpoint at "/ws" for streaming updates. The server should accept the output buffer as a dependency. For now, just get the server structure in place with placeholder responses.
-- status: complete
-- dependencies: output-buffer
+- content: Initialize changesets by running `bunx changeset init`. This creates a `.changeset` directory with config.json and README.md. Ensure the config uses `"access": "public"` for the scoped package.
+- status: pending
+- dependencies: add-files-field
 
-### websocket-streaming
+### add-changeset-release-workflow
 
-- content: Implement WebSocket logic in `src/ui/server.ts`. When a client connects, immediately send the full history from the output buffer (both loop logs and agent output). Subscribe to buffer updates and broadcast new entries to all connected clients. Handle client disconnection gracefully by unsubscribing from buffer updates.
-- status: complete
-- dependencies: bun-server, stream-capture
+- content: Create `.github/workflows/release.yml` that uses changesets/action to create "Version Packages" PRs and publish to npm on merge to main. Use `NPM_TOKEN` secret for authentication. Set up with bun for package installation.
+- status: pending
+- dependencies: init-changesets
 
 ---
 
-## Phase 3: React Frontend
+## Phase 3: CI Workflow
 
-### html-shell
+### add-ci-workflow
 
-- content: Create `src/ui/index.html` with a basic HTML shell that loads a React app from `./app.tsx`. Include minimal inline styles for dark theme (dark background, light text). The HTML should have a div with id "root" for React to mount into.
-- status: complete
+- content: Create `.github/workflows/ci.yml` that runs on all PRs and pushes. Jobs should: 1) Install dependencies with `bun install`, 2) Run typechecking with `bun run typecheck`, 3) Run tests with `bun test`. Use ubuntu-latest and setup-bun action.
+- status: pending
 - dependencies: none
 
-### react-app-scaffold
-
-- content: Create `src/ui/app.tsx` with a basic React app structure. Set up the WebSocket connection to "/ws", store received messages in state, and render two sections: "Loop Status" and "Agent Output". Use React 18's createRoot. Install react and react-dom as dependencies.
-- status: complete
-- dependencies: html-shell
-
-### stream-display
-
-- content: Implement the streaming text display in `src/ui/app.tsx`. Render loop logs with colored timestamps matching the terminal colors (blue for info, green for success, yellow for warning, red for error). Render agent output as preformatted monospace text. Auto-scroll to bottom when new content arrives. Show a visual indicator for connection status.
-- status: complete
-- dependencies: react-app-scaffold, websocket-streaming
-
 ---
 
-## Phase 4: Integration
+## Phase 4: Documentation
 
-### serve-html
+### update-readme-installation
 
-- content: Update `src/ui/server.ts` to serve the `index.html` file at the "/" route using Bun's HTML imports feature. This allows Bun to automatically bundle the React app and handle hot module replacement in development.
-- status: complete
-- dependencies: html-shell, bun-server
+- content: Update README.md installation section to show npm installation methods: 1) `bunx @cephalization/math <command>` (recommended for one-off usage), 2) `bun install -g @cephalization/math` (global install). Keep the existing clone/link instructions for development.
+- status: pending
+- dependencies: update-package-name
 
-### loop-integration
+### update-readme-bun-requirement
 
-- content: Update `src/loop.ts` to optionally start the web UI server before entering the main loop. Add a `ui` option to LoopOptions (default: true). When enabled, start the server and log the URL. The server should remain running after the loop completes (don't shut it down).
-- status: complete
-- dependencies: serve-html, websocket-streaming, stream-capture
-
-### cli-option
-
-- content: Update `src/commands/run.ts` and `index.ts` to support a `--no-ui` flag that disables the web UI. Update the help text to document this option. Pass the flag through to runLoop.
-- status: complete
-- dependencies: loop-integration
+- content: Add a prominent "Requirements" section near the top of README.md stating that Bun is required to run this tool (not Node.js). Link to bun.sh for installation instructions. Explain why Bun is needed (TypeScript execution, shebang).
+- status: pending
+- dependencies: update-readme-installation
 
 ---
-
-## Phase 5: Polish
-
-### connection-handling
-
-- content: Add robust connection handling to the frontend. When WebSocket disconnects, show a "Disconnected" banner and attempt to reconnect every 3 seconds. When reconnected, fetch full history again. Show "Connecting..." state on initial load.
-- status: complete
-- dependencies: stream-display
-
-### final-testing
-
-- content: Manually test the full flow: run `math run` with UI enabled, verify the web UI shows at localhost:8314, verify loop logs and agent output stream correctly in separate sections, verify multiple browser tabs show the same content, verify `--no-ui` disables the server. Fix any issues found.
-- status: complete
-- dependencies: cli-option, connection-handling

@@ -99,6 +99,7 @@ Only commit AFTER tests pass.
 | Run tests | `bun test` |
 | Type check | `bun run typecheck` |
 | Run CLI | `bun index.ts <command>` |
+| Add changeset | `bunx changeset` |
 | Stage all | `git add -A` |
 | Commit | `git commit -m "feat: ..."` |
 
