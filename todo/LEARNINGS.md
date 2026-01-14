@@ -23,3 +23,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The shebang `#!/usr/bin/env bun` was already present at line 1 of index.ts
 - Changing package name to scoped `@cephalization/math` only requires updating the `name` field - the `bin` field key stays as `math` to keep the CLI command name
 - Pre-existing test failure in `src/loop.test.ts` for "Skipping git branch creation" message - unrelated to package configuration changes
+
+## add-files-field
+
+- The `files` field in package.json uses an array of glob patterns to specify what gets included in the npm package
+- Placed the `files` field after `bin` to keep package metadata grouped logically
+- The glob pattern `src/**/*.ts` ensures all TypeScript source files are included for consumers who want to inspect the source
+- Pre-existing test failure still present - documented by previous agent, unrelated to this change
