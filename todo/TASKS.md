@@ -43,7 +43,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### init-changesets
 
 - content: Initialize changesets by running `bunx changeset init`. This creates a `.changeset` directory with config.json and README.md. Ensure the config uses `"access": "public"` for the scoped package.
-- status: pending
+- status: complete
 - dependencies: add-files-field
 
 ### add-changeset-release-workflow
