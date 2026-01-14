@@ -47,3 +47,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Added `concurrency` setting to prevent parallel runs on the same branch which could cause race conditions
 - The `oven-sh/setup-bun@v2` action sets up Bun in GitHub Actions - use v2 for latest features
 - Pre-existing test failure (1 fail, 86 pass) still present - unrelated to workflow changes
+
+## add-ci-workflow
+
+- CI workflow is separate from release workflow - CI runs on all PRs and pushes, release only on main branch merges
+- Followed the same pattern as release.yml for consistency: checkout -> setup-bun -> bun install -> run tasks
+- The workflow triggers on both `push` to main and all `pull_request` events (any branch)
+- Steps are sequential (typecheck then test) since we want to fail fast on type errors before running tests
+- Pre-existing test failure (1 fail, 86 pass) still present - the "dry-run mode skips git operations" test expects a "Skipping git branch creation" message that isn't being logged
