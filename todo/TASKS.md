@@ -33,7 +33,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-files-field
 
 - content: Add a `files` field to package.json specifying which files to include in the published package: `["index.ts", "src/**/*.ts", "README.md"]`. This ensures only necessary files are published.
-- status: pending
+- status: complete
 - dependencies: update-package-name
 
 ---
