@@ -1,5 +1,11 @@
 # @cephalization/math
 
+## 0.3.2
+
+### Patch Changes
+
+- 7343771: feat: Include more guidelines in template prompts
+
 ## 0.3.1
 
 ### Patch Changes
