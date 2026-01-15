@@ -10,7 +10,7 @@ Implement ONE task from TASKS.md, test it, commit it, log your learnings, then E
 
 1. **Read TASKS.md** - Find the first task with \`status: pending\` where ALL dependencies have \`status: complete\`
 2. **Mark in_progress** - Update the task's status to \`in_progress\` in TASKS.md
-3. **Implement** - Write the code following the project's patterns
+3. **Implement** - Write the code following the project's patterns. Use prior learnings to your advantage.
 4. **Write tests** - For behavioral code changes, create unit tests in the appropriate directory. Skip for documentation-only tasks.
 5. **Run tests** - Execute tests from the package directory (ensures existing tests still pass)
 6. **Fix failures** - If tests fail, debug and fix. DO NOT PROCEED WITH FAILING TESTS.
