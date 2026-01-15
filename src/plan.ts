@@ -51,6 +51,7 @@ NOTE:
 - For frontend tooling, check if 'agent-browser' cli is installed. If so, it should be used for validating visual changes.
 - Distinguish between unit tests and integration tests.
 - Prefer code generation tools over manual coding when there are scripts to generate code (e.g. relay, openapi-codegen, etc).
+- If typed languages are used, prefer concrete, safe types (e.g. unknown instead of any in TypeScript)
 
 ## Step 2: Plan the Tasks
 
