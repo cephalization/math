@@ -46,6 +46,11 @@ FIRST, examine the project to understand its technology stack:
 - Identify the linter/formatter (e.g., eslint, prettier, rustfmt, black)
 - Note any existing scripts or commands defined in the project
 
+NOTE:
+- Distinguish between frontend and backend tooling. 
+- For frontend tooling, check if 'agent-browser' cli is installed. If so, it should be used for validating visual changes.
+- Distinguish between unit tests and integration tests.
+
 ## Step 2: Plan the Tasks
 
 Break the user's goal into discrete, implementable tasks using this format:
