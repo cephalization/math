@@ -99,7 +99,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-prune-command
 
 - content: Update `src/commands/prune.ts` to use the updated prune module. Verify it only targets `.math/backups/` contents.
-- status: pending
+- status: complete
 - dependencies: update-prune-module
 
 ---

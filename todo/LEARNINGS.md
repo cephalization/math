@@ -109,3 +109,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The change makes the module simpler: no pattern matching needed, just list all subdirectories of `.math/backups/`
 - Verified the implementation works manually by creating test directories in `.math/backups/` and running `findArtifacts()`
 - The prune command (`src/commands/prune.ts`) already calls `findArtifacts()` without arguments, so no changes needed there
+
+## update-prune-command
+
+- Verified that `src/commands/prune.ts` already correctly uses the updated prune module - no code changes were needed
+- The command imports `findArtifacts`, `confirmPrune`, `deleteArtifacts` from `../prune` and calls them correctly
+- Since `findArtifacts()` now internally uses `getBackupsDir()`, the command automatically targets only `.math/backups/` contents
+- The test file `src/prune.test.ts` has failing tests because it still passes a directory argument to `findArtifacts()` - this is expected and will be fixed in the `update-existing-tests` task
+- Pattern: when a module's API changes (like removing a parameter), the consuming code may not need updates if it was already using the simpler form of the API
