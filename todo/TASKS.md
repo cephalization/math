@@ -77,7 +77,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-summary-generator
 
 - content: Create `src/summary.ts` with a `generatePlanSummary(tasksContent: string): string` function that extracts task IDs from TASKS.md and generates a short kebab-case summary (max 5 words, e.g., `auth-flow-setup`). Use task IDs or phase names as basis for summary.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### update-iterate-command

@@ -78,3 +78,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - No tasks-specific tests exist in `src/tasks.test.ts` - tests are in the later `add-paths-tests` task
 - Existing tests (loop.test.ts, commands/init.test.ts) pass because they already create `.math/todo/` structure from previous migrations
 - Pre-existing test failures in `ui/app.test.ts` are unrelated - those tests expect a missing `src/ui/app.tsx` file
+
+## add-summary-generator
+
+- Created `src/summary.ts` with `generatePlanSummary()` function that extracts a kebab-case summary from TASKS.md content
+- Strategy prioritizes phase names (e.g., "## Phase 1: Core Infrastructure" -> "core-infrastructure") over task IDs for better readability
+- Falls back to first task ID if no phase names found, then to "plan" as ultimate fallback
+- Used regex patterns similar to `tasks.ts` for consistency: `^###\s+(.+)$` for task IDs, `^##\s+Phase\s+\d+:\s*(.+)$` for phases
+- `toKebabCase()` helper removes special characters, converts spaces to hyphens, and collapses multiple hyphens
+- Max 5 words limit enforced by splitting on hyphens and taking first 5 elements
+- Tests cover: phase name extraction, truncation, task ID fallback, special characters, empty content, multiple phases
+- Pre-existing test failures in `ui/app.test.ts` are unrelated to this task
