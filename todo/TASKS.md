@@ -61,7 +61,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-status-command
 
 - content: Update `src/commands/status.ts` to use paths module for reading tasks. No migration needed here as it just reads existing files.
-- status: pending
+- status: complete
 - dependencies: add-paths-module
 
 ### update-tasks-module
