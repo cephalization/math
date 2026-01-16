@@ -137,7 +137,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-summary-tests
 
 - content: Add tests for `src/summary.ts` in `src/summary.test.ts` verifying summary generation from various TASKS.md contents.
-- status: pending
+- status: complete
 - dependencies: add-summary-generator
 
 ### update-existing-tests
