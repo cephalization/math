@@ -27,7 +27,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-paths-module
 
 - content: Create `src/paths.ts` module that exports functions for all math directory paths: `getMathDir()` returns `.math`, `getTodoDir()` returns `.math/todo`, `getBackupsDir()` returns `.math/backups`. Use `join(process.cwd(), ...)` pattern. This centralizes all path logic for the migration.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### add-migration-util
