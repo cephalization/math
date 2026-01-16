@@ -33,3 +33,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Used `rename()` from `node:fs/promises` to move directory atomically instead of copy+delete
 - Tests use `process.chdir()` to test in an isolated temp directory - this avoids polluting the actual project directory
 - Kept tests simple: testing the detection functions directly, and just verifying the happy paths for `migrateIfNeeded()` (skipping interactive prompt tests since they require stdin mocking)
+
+## update-init-command
+
+- Replaced `join(process.cwd(), "todo")` with `getTodoDir()` from paths module - keeps path logic centralized
+- Only imported `getTodoDir` since `getMathDir` wasn't needed (mkdir with recursive: true creates parent dirs)
+- Kept `join` import for constructing file paths within todoDir (e.g., `join(todoDir, "PROMPT.md")`)
+- Updated all console messages from `todo/` to `.math/todo/` for consistency
+- Added tests that verify the command creates files in the correct location and respects existing directories
+- Pre-existing test failures in `ui/app.test.ts` are unrelated - those tests use relative paths that don't resolve correctly

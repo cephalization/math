@@ -43,7 +43,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-init-command
 
 - content: Update `src/commands/init.ts` to create `.math/todo/` directory structure instead of `todo/`. Update all path references to use the new paths module. Update console output messages to reference `.math/todo/` paths.
-- status: pending
+- status: complete
 - dependencies: add-paths-module
 
 ### update-run-command
