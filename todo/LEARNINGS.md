@@ -132,3 +132,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated example comment from `todo/` to `.math/todo/`
 - This is a documentation-only change with no behavioral impact - no new tests required
 - Pre-existing test failures in `src/prune.test.ts` are unrelated and will be addressed by `update-existing-tests` task
+
+## add-paths-tests
+
+- Tests already existed in `src/paths.test.ts` - likely created during `add-paths-module` implementation
+- The existing tests comprehensively cover: individual function outputs, absolute path verification, and path hierarchy (child relationships)
+- All 5 tests pass with 8 expect() calls total - good coverage for a simple module
+- Pattern: when verifying path modules, test both exact values AND structural properties (is absolute, has correct parent-child relationships)
+- Task was effectively a verification task - confirmed existing tests are sufficient and passing
