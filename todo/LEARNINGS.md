@@ -117,3 +117,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Since `findArtifacts()` now internally uses `getBackupsDir()`, the command automatically targets only `.math/backups/` contents
 - The test file `src/prune.test.ts` has failing tests because it still passes a directory argument to `findArtifacts()` - this is expected and will be fixed in the `update-existing-tests` task
 - Pattern: when a module's API changes (like removing a parameter), the consuming code may not need updates if it was already using the simpler form of the API
+
+## update-templates
+
+- Added "Directory Structure" section to PROMPT_TEMPLATE Quick Reference documenting `.math/todo/` and `.math/backups/<summary>/` paths
+- Relative references to TASKS.md and LEARNINGS.md within the template don't need path prefixes - the template is placed in `.math/todo/` so relative references work correctly
+- No template-specific tests exist in the codebase, and this is a documentation-only change, so no new tests were required
+- Pre-existing test failures in `src/prune.test.ts` are from `update-prune-module` task changing the `findArtifacts()` function signature - will be fixed in `update-existing-tests` task

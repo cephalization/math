@@ -105,6 +105,10 @@ Only commit AFTER tests pass.
 | Stage all | \`git add -A\` |
 | Commit | \`git commit -m "feat: ..."\` |
 
+**Directory Structure:**
+- \`.math/todo/\` - Active sprint files (PROMPT.md, TASKS.md, LEARNINGS.md)
+- \`.math/backups/<summary>/\` - Archived sprints from \`math iterate\`
+
 ---
 
 ## Remember

@@ -109,7 +109,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-templates
 
 - content: Update `src/templates.ts` PROMPT_TEMPLATE to reference `.math/todo/TASKS.md` and `.math/todo/LEARNINGS.md` in instructions. Update the Quick Reference section paths. Update TASKS_TEMPLATE references similarly.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### update-cli-help
