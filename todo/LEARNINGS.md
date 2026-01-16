@@ -167,3 +167,17 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Required adding `process.chdir(TEST_DIR)` in `beforeEach` so the paths module resolves `.math/backups/` correctly relative to the test directory
 - Updated 7 test cases to reflect the new API and directory structure while preserving test intent (empty dir, find dirs, numeric suffixes, ignore files, non-existent dir, absolute paths)
 - Test count increased from 10 to 15 tests due to clearer test separation and the new directory structure requirements
+
+## validate-full-workflow
+
+- All 95 tests pass with 217 expect() calls - solid test coverage for the migration
+- Manual validation of all 6 commands confirmed full workflow works with `.math/` directory structure:
+  - `math init`: Creates `.math/todo/` with PROMPT.md, TASKS.md, LEARNINGS.md ✓
+  - `math status`: Reads tasks from `.math/todo/TASKS.md` correctly ✓
+  - `math plan`: Prompts for user input and works with `.math/todo/` structure ✓
+  - `math run --dry-run`: Starts agent loop, reads files from `.math/todo/` ✓
+  - `math iterate`: Backs up to `.math/backups/<summary>/` and resets files ✓
+  - `math prune`: Finds and deletes backups from `.math/backups/` only ✓
+- Migration from legacy `todo/` to `.math/todo/` works correctly - prompts user, moves files, removes old directory
+- Help text (`math --help`) correctly references `.math/` paths throughout
+- The migration is seamless for existing users - they get prompted once, then everything just works

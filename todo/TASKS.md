@@ -149,5 +149,5 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### validate-full-workflow
 
 - content: Manual validation: Run `math init`, `math plan`, `math run`, `math iterate`, `math status`, `math prune` to verify full workflow with new `.math/` directory structure. Fix any issues discovered.
-- status: pending
+- status: complete
 - dependencies: update-existing-tests
