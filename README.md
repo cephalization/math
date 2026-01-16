@@ -70,7 +70,7 @@ bun link
 math init
 ```
 
-Creates a `todo/` directory with template files and offers to run **planning mode** to help you break down your goal into tasks.
+Creates a `.math/todo/` directory with template files and offers to run **planning mode** to help you break down your goal into tasks.
 
 Options:
 
@@ -130,11 +130,13 @@ Shows task progress with a visual progress bar and next task info.
 math iterate
 ```
 
-Backs up `todo/` to `todo-{M}-{D}-{Y}/` and resets for a new goal:
+Backs up `.math/todo/` to `.math/backups/<summary>/` and resets for a new goal:
 
 - TASKS.md and LEARNINGS.md are reset to templates
 - PROMPT.md is preserved (keeping your accumulated "signs")
 - Offers to run planning mode for your new goal
+
+The `<summary>` is an AI-generated short description of the completed sprint (e.g., `add-user-auth`, `fix-api-bugs`).
 
 Options:
 
