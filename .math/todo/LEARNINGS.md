@@ -37,3 +37,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The diagram accurately reflects the current flow: check tasks → exit if complete → invoke agent → agent works → loop back
 - No changes were needed - the diagram was already correct
 - Verification-only tasks are valid - not all tasks require code changes
+
+## verify-cli-help
+
+- All help text in index.ts already uses the correct `.math/todo/` and `.math/backups/` paths
+- Found 3 `todo/` references at lines 34, 38, and 58 - all correctly prefixed with `.math/`
+- No standalone `todo/` references exist that need updating
+- The help output correctly describes: `init` creates `.math/todo/`, `iterate` backs up to `.math/backups/`, and `prune` deletes from `.math/backups/`
+- Verification-only tasks with no required changes are valid - document findings even when everything is already correct

@@ -47,7 +47,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### verify-cli-help
 
 - content: Run `bun ./index.ts --help` and verify all command descriptions reference `.math/` paths correctly. The help output should already be updated based on recent commits, but verify and fix any remaining `todo/` references in help strings in index.ts.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### verify-subcommand-help
