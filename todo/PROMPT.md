@@ -97,11 +97,16 @@ Only commit AFTER tests pass.
 | Action | Command |
 |--------|---------|
 | Run tests | `bun test` |
+| Run single test | `bun test src/path.test.ts` |
 | Type check | `bun run typecheck` |
 | Run CLI | `bun index.ts <command>` |
 | Add changeset | `bunx changeset` |
 | Stage all | `git add -A` |
 | Commit | `git commit -m "feat: ..."` |
+
+**Directory Structure:**
+- `.math/todo/` - Active sprint files (PROMPT.md, TASKS.md, LEARNINGS.md)
+- `.math/backups/<summary>/` - Archived sprints from `math iterate`
 
 ---
 
