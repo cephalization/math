@@ -143,7 +143,7 @@ Backs up `.math/todo/` to `.math/backups/<summary>/` and resets for a new goal:
 - PROMPT.md is preserved (keeping your accumulated "signs")
 - Offers to run planning mode for your new goal
 
-The `<summary>` is an AI-generated short description of the completed sprint (e.g., `add-user-auth`, `fix-api-bugs`).
+The `<summary>` is a short description of the completed sprint (e.g., `add-user-auth`, `fix-api-bugs`).
 
 Options:
 
