@@ -69,3 +69,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The `readTasks()` function already accepts an optional `todoDir` parameter with a default of `join(process.cwd(), "todo")` - we just needed to pass the new path
 - No migration check needed in this command since it only reads files - migration is handled by commands that modify state (init, plan, run)
 - No status-specific tests exist, so relied on typecheck and running full test suite to verify no regressions
+
+## update-tasks-module
+
+- Updated `readTasks()` and `writeTasks()` default directory from `join(process.cwd(), "todo")` to `getTodoDir()` (which returns `.math/todo`)
+- Added import for `getTodoDir` from `./paths` module
+- Both functions already had optional `todoDir` parameter - this change only affects the default when no parameter is passed
+- No tasks-specific tests exist in `src/tasks.test.ts` - tests are in the later `add-paths-tests` task
+- Existing tests (loop.test.ts, commands/init.test.ts) pass because they already create `.math/todo/` structure from previous migrations
+- Pre-existing test failures in `ui/app.test.ts` are unrelated - those tests expect a missing `src/ui/app.tsx` file

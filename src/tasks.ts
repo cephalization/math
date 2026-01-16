@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
+import { getTodoDir } from "./paths";
 
 export interface Task {
   id: string;
@@ -178,7 +179,7 @@ export function updateTaskStatus(
 export async function readTasks(
   todoDir?: string
 ): Promise<{ tasks: Task[]; content: string }> {
-  const dir = todoDir || join(process.cwd(), "todo");
+  const dir = todoDir || getTodoDir();
   const tasksPath = join(dir, "TASKS.md");
 
   if (!existsSync(tasksPath)) {
@@ -198,7 +199,7 @@ export async function writeTasks(
   content: string,
   todoDir?: string
 ): Promise<void> {
-  const dir = todoDir || join(process.cwd(), "todo");
+  const dir = todoDir || getTodoDir();
   const tasksPath = join(dir, "TASKS.md");
   await Bun.write(tasksPath, content);
 }
