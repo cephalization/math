@@ -61,5 +61,5 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### final-documentation-review
 
 - content: Do a final grep for any remaining `todo/` references in README.md and index.ts that should be `.math/todo/`. Ensure consistency across all documentation. Skip code files - only documentation and help text.
-- status: pending
+- status: complete
 - dependencies: add-directory-structure-table, update-loop-diagram, verify-subcommand-help
