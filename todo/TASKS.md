@@ -83,7 +83,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-iterate-command
 
 - content: Refactor `src/commands/iterate.ts` to: 1) Use paths module for directories, 2) Create backups in `.math/backups/<summary>/` using generatePlanSummary(), 3) Add migration check at start, 4) Update console messages to reference new paths.
-- status: pending
+- status: complete
 - dependencies: add-paths-module, add-migration-util, add-summary-generator
 
 ---

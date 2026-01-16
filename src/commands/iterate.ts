@@ -1,7 +1,11 @@
 import { existsSync } from "node:fs";
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { TASKS_TEMPLATE, LEARNINGS_TEMPLATE } from "../templates";
 import { runPlanningMode, askToRunPlanning } from "../plan";
+import { getTodoDir, getBackupsDir } from "../paths";
+import { migrateIfNeeded } from "../migration";
+import { generatePlanSummary } from "../summary";
 
 const colors = {
   reset: "\x1b[0m",
@@ -14,20 +18,31 @@ const colors = {
 export async function iterate(
   options: { skipPlan?: boolean; model?: string } = {}
 ) {
-  const todoDir = join(process.cwd(), "todo");
-
-  if (!existsSync(todoDir)) {
-    throw new Error("todo/ directory not found. Run 'math init' first.");
+  // Check for migration first
+  const migrated = await migrateIfNeeded();
+  if (!migrated) {
+    throw new Error("Migration required but was declined.");
   }
 
-  // Generate backup directory name: todo-{M}-{D}-{Y}
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const year = now.getFullYear();
-  const backupDir = join(process.cwd(), `todo-${month}-${day}-${year}`);
+  const todoDir = getTodoDir();
 
-  // Handle existing backup for same day
+  if (!existsSync(todoDir)) {
+    throw new Error(".math/todo/ directory not found. Run 'math init' first.");
+  }
+
+  // Read current TASKS.md to generate summary for backup directory name
+  const tasksPath = join(todoDir, "TASKS.md");
+  let summary = "plan";
+  if (existsSync(tasksPath)) {
+    const tasksContent = await Bun.file(tasksPath).text();
+    summary = generatePlanSummary(tasksContent);
+  }
+
+  // Generate backup directory in .math/backups/<summary>/
+  const backupsDir = getBackupsDir();
+  const backupDir = join(backupsDir, summary);
+
+  // Handle existing backup with same summary
   let finalBackupDir = backupDir;
   let counter = 1;
   while (existsSync(finalBackupDir)) {
@@ -37,11 +52,15 @@ export async function iterate(
 
   console.log(`${colors.bold}Iterating to new sprint${colors.reset}\n`);
 
+  // Ensure .math/backups/ directory exists
+  if (!existsSync(backupsDir)) {
+    await mkdir(backupsDir, { recursive: true });
+  }
+
   // Step 1: Backup current todo directory
+  const backupName = finalBackupDir.split("/").pop();
   console.log(
-    `${colors.cyan}1.${colors.reset} Backing up todo/ to ${finalBackupDir
-      .split("/")
-      .pop()}/`
+    `${colors.cyan}1.${colors.reset} Backing up .math/todo/ to .math/backups/${backupName}/`
   );
   await Bun.$`cp -r ${todoDir} ${finalBackupDir}`;
   console.log(`   ${colors.green}✓${colors.reset} Backup complete\n`);
@@ -67,9 +86,7 @@ export async function iterate(
 
   console.log(`${colors.green}Done!${colors.reset} Ready for new sprint.`);
   console.log(
-    `${colors.yellow}Previous sprint preserved at:${
-      colors.reset
-    } ${finalBackupDir.split("/").pop()}/`
+    `${colors.yellow}Previous sprint preserved at:${colors.reset} .math/backups/${backupName}/`
   );
 
   // Ask to run planning mode unless --no-plan flag
@@ -84,7 +101,7 @@ export async function iterate(
   console.log();
   console.log(`${colors.bold}Next steps:${colors.reset}`);
   console.log(
-    `  1. Edit ${colors.cyan}todo/TASKS.md${colors.reset} to add new tasks`
+    `  1. Edit ${colors.cyan}.math/todo/TASKS.md${colors.reset} to add new tasks`
   );
   console.log(
     `  2. Run ${colors.cyan}math run${colors.reset} to start the agent loop`
