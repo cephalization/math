@@ -17,8 +17,8 @@ describe("runLoop dry-run mode", () => {
     originalCwd = process.cwd();
     process.chdir(testDir);
 
-    // Create the todo directory with required files
-    const todoDir = join(testDir, "todo");
+    // Create the .math/todo directory with required files (new structure)
+    const todoDir = join(testDir, ".math", "todo");
     await mkdir(todoDir, { recursive: true });
 
     // Create PROMPT.md
@@ -51,7 +51,7 @@ describe("runLoop dry-run mode", () => {
   test("dry-run mode uses custom mock agent", async () => {
     // Use a pending task so the agent gets invoked
     await writeFile(
-      join(testDir, "todo", "TASKS.md"),
+      join(testDir, ".math", "todo", "TASKS.md"),
       `# Tasks
 
 ### test-task
@@ -113,7 +113,7 @@ describe("runLoop dry-run mode", () => {
   test("dry-run mode with pending tasks runs iteration", async () => {
     // Update TASKS.md to have a pending task
     await writeFile(
-      join(testDir, "todo", "TASKS.md"),
+      join(testDir, ".math", "todo", "TASKS.md"),
       `# Tasks
 
 ### test-task
@@ -178,7 +178,7 @@ describe("runLoop dry-run mode", () => {
   test("agent option with pending task invokes agent", async () => {
     // Update TASKS.md to have a pending task
     await writeFile(
-      join(testDir, "todo", "TASKS.md"),
+      join(testDir, ".math", "todo", "TASKS.md"),
       `# Tasks
 
 ### test-task
@@ -227,8 +227,8 @@ describe("runLoop stream-capture with buffer", () => {
     originalCwd = process.cwd();
     process.chdir(testDir);
 
-    // Create the todo directory with required files
-    const todoDir = join(testDir, "todo");
+    // Create the .math/todo directory with required files (new structure)
+    const todoDir = join(testDir, ".math", "todo");
     await mkdir(todoDir, { recursive: true });
 
     // Create PROMPT.md
@@ -318,7 +318,7 @@ describe("runLoop stream-capture with buffer", () => {
   test("agent output is captured to buffer", async () => {
     // Use a pending task so the agent gets invoked
     await writeFile(
-      join(testDir, "todo", "TASKS.md"),
+      join(testDir, ".math", "todo", "TASKS.md"),
       `# Tasks
 
 ### test-task
@@ -396,7 +396,7 @@ describe("runLoop stream-capture with buffer", () => {
 
   test("buffer subscribers receive agent output in real-time", async () => {
     await writeFile(
-      join(testDir, "todo", "TASKS.md"),
+      join(testDir, ".math", "todo", "TASKS.md"),
       `# Tasks
 
 ### test-task
@@ -479,8 +479,8 @@ describe("runLoop UI server integration", () => {
     originalCwd = process.cwd();
     process.chdir(testDir);
 
-    // Create the todo directory with required files
-    const todoDir = join(testDir, "todo");
+    // Create the .math/todo directory with required files (new structure)
+    const todoDir = join(testDir, ".math", "todo");
     await mkdir(todoDir, { recursive: true });
 
     // Create PROMPT.md

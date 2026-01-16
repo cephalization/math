@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { readTasks, countTasks, updateTaskStatus, writeTasks } from "./tasks";
 import { DEFAULT_MODEL } from "./constants";
@@ -6,6 +5,8 @@ import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
 import type { Agent, LogCategory } from "./agent";
 import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
 import { startServer, DEFAULT_PORT } from "./ui/server";
+import { getTodoDir } from "./paths";
+import { migrateIfNeeded } from "./migration";
 
 const colors = {
   reset: "\x1b[0m",
@@ -149,9 +150,15 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     log(`Web UI available at http://localhost:${DEFAULT_PORT}`);
   }
 
-  const todoDir = join(process.cwd(), "todo");
-  const promptPath = join(todoDir, "PROMPT.md");
-  const tasksPath = join(todoDir, "TASKS.md");
+  // Check for legacy todo/ directory and migrate if needed
+  const migrated = await migrateIfNeeded();
+  if (!migrated) {
+    throw new Error("Migration declined. Please migrate to continue.");
+  }
+
+  const todoDir = getTodoDir();
+  const promptPath = `${todoDir}/PROMPT.md`;
+  const tasksPath = `${todoDir}/TASKS.md`;
 
   // Check required files exist
   if (!existsSync(promptPath)) {
@@ -262,7 +269,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     try {
       const prompt =
         "Read the attached PROMPT.md and TASKS.md files. Follow the instructions in PROMPT.md to complete the next pending task.";
-      const files = ["todo/PROMPT.md", "todo/TASKS.md"];
+      const files = [".math/todo/PROMPT.md", ".math/todo/TASKS.md"];
 
       const result = await agent.run({
         model,

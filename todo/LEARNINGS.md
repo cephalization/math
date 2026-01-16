@@ -42,3 +42,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated all console messages from `todo/` to `.math/todo/` for consistency
 - Added tests that verify the command creates files in the correct location and respects existing directories
 - Pre-existing test failures in `ui/app.test.ts` are unrelated - those tests use relative paths that don't resolve correctly
+
+## update-run-command
+
+- Replaced `join(process.cwd(), "todo")` with `getTodoDir()` from paths module
+- Removed unused `join` import from `node:path` since path construction now uses template literals with todoDir
+- Added `migrateIfNeeded()` call early in `runLoop()` - placed after UI server setup but before checking for required files
+- Migration check throws error if user declines - prevents running with legacy paths in an inconsistent state
+- Updated agent file paths from `["todo/PROMPT.md", "todo/TASKS.md"]` to `[".math/todo/PROMPT.md", ".math/todo/TASKS.md"]`
+- **Critical test fix**: Tests were creating `todo/` directories (legacy path) which caused `migrateIfNeeded()` to prompt interactively and hang. Updated all test `beforeEach` blocks to create `.math/todo/` structure instead
+- Path construction pattern: used template literals (`${todoDir}/PROMPT.md`) instead of `join()` for simplicity since todoDir is already absolute

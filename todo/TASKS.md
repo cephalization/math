@@ -49,7 +49,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-run-command
 
 - content: Update `src/loop.ts` to use paths module for todoDir. Add call to `migrateIfNeeded()` at start of `runLoop()`. Update file paths passed to agent from `todo/PROMPT.md` to `.math/todo/PROMPT.md`.
-- status: pending
+- status: complete
 - dependencies: add-paths-module, add-migration-util
 
 ### update-plan-command
