@@ -33,7 +33,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-directory-structure-table
 
 - content: Add a brief table to README.md documenting the `.math/` directory structure. Include `.math/todo/` (active sprint files) and `.math/backups/` (archived sprints). Keep it to 2-3 rows with one-sentence descriptions each.
-- status: pending
+- status: complete
 - dependencies: update-readme-paths
 
 ### update-loop-diagram
