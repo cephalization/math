@@ -89,3 +89,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Max 5 words limit enforced by splitting on hyphens and taking first 5 elements
 - Tests cover: phase name extraction, truncation, task ID fallback, special characters, empty content, multiple phases
 - Pre-existing test failures in `ui/app.test.ts` are unrelated to this task
+
+## update-iterate-command
+
+- Refactored to use `getTodoDir()` and `getBackupsDir()` from paths module instead of `join(process.cwd(), ...)`
+- Replaced date-based backup naming (`todo-{M}-{D}-{Y}`) with summary-based naming using `generatePlanSummary()` - creates more meaningful backup names like `core-infrastructure/` instead of `todo-1-16-2026/`
+- Backups now go to `.math/backups/<summary>/` instead of project root - keeps project root clean
+- Added `migrateIfNeeded()` call at start - ensures legacy `todo/` users are prompted to migrate before the command runs
+- Added `mkdir(backupsDir, { recursive: true })` to ensure `.math/backups/` exists before copying
+- Updated all console messages to reference `.math/todo/` and `.math/backups/` paths
+- Imported `mkdir` from `node:fs/promises` for async directory creation
+- Counter-based naming still works for duplicate summaries (e.g., `core-infrastructure`, `core-infrastructure-1`, `core-infrastructure-2`)
