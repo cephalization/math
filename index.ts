@@ -31,12 +31,12 @@ ${colors.bold}USAGE${colors.reset}
   math <command> [options]
 
 ${colors.bold}COMMANDS${colors.reset}
-  ${colors.cyan}init${colors.reset}      Create todo/ directory with template files
+  ${colors.cyan}init${colors.reset}      Create .math/todo/ directory with template files
   ${colors.cyan}plan${colors.reset}      Run planning mode to flesh out tasks
   ${colors.cyan}run${colors.reset}       Start the agent loop until all tasks complete
   ${colors.cyan}status${colors.reset}    Show current task counts
-  ${colors.cyan}iterate${colors.reset}   Backup todo/ and reset for a new sprint
-  ${colors.cyan}prune${colors.reset}     Delete backup artifacts (todo-M-D-Y directories)
+  ${colors.cyan}iterate${colors.reset}   Backup .math/todo/ and reset for a new sprint
+  ${colors.cyan}prune${colors.reset}     Delete backup artifacts from .math/backups/
   ${colors.cyan}help${colors.reset}      Show this help message
 
 ${colors.bold}OPTIONS${colors.reset}
@@ -55,7 +55,7 @@ ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Initialize without planning${colors.reset}
   math init --no-plan
 
-  ${colors.dim}# Run planning mode on existing todo/${colors.reset}
+  ${colors.dim}# Run planning mode on existing .math/todo/${colors.reset}
   math plan
 
   ${colors.dim}# Quick planning without clarifying questions${colors.reset}
