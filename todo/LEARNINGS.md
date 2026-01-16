@@ -156,3 +156,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - All tests pass - no additional tests needed as the coverage is already comprehensive
 - Pattern: when implementing a module (like `add-summary-generator`), it's valuable to write tests alongside the implementation rather than deferring to a separate test task - this leads to better coverage and faster feedback loops
 - Pre-existing test failures in `src/prune.test.ts` are unrelated - will be fixed in `update-existing-tests` task
+
+## update-existing-tests
+
+- Only `src/prune.test.ts` needed updates - `loop.test.ts` and other test files were already updated during earlier tasks
+- Key changes to prune tests: 
+  1. Tests now create directories in `.math/backups/` instead of directly in `TEST_DIR`
+  2. `findArtifacts()` now takes no arguments - it always looks in `.math/backups/` via `getBackupsDir()`
+  3. Updated backup directory names from date-based (`todo-1-15-2025`) to summary-based (`core-infrastructure`) to match new naming convention
+- Required adding `process.chdir(TEST_DIR)` in `beforeEach` so the paths module resolves `.math/backups/` correctly relative to the test directory
+- Updated 7 test cases to reflect the new API and directory structure while preserving test intent (empty dir, find dirs, numeric suffixes, ignore files, non-existent dir, absolute paths)
+- Test count increased from 10 to 15 tests due to clearer test separation and the new directory structure requirements
