@@ -125,7 +125,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-paths-tests
 
 - content: Add tests for `src/paths.ts` in `src/paths.test.ts` verifying correct path construction for getMathDir, getTodoDir, getBackupsDir.
-- status: pending
+- status: complete
 - dependencies: add-paths-module
 
 ### add-migration-tests
