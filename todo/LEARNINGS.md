@@ -100,3 +100,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated all console messages to reference `.math/todo/` and `.math/backups/` paths
 - Imported `mkdir` from `node:fs/promises` for async directory creation
 - Counter-based naming still works for duplicate summaries (e.g., `core-infrastructure`, `core-infrastructure-1`, `core-infrastructure-2`)
+
+## update-prune-module
+
+- Simplified `findArtifacts()` by removing the `directory` parameter - it now always scans `.math/backups/` using `getBackupsDir()` from paths module
+- Removed `BACKUP_DIR_PATTERN` regex entirely since we no longer need to distinguish backup directories by name pattern - anything in `.math/backups/` is an artifact
+- This is a breaking change for the test file which still passes directory parameter - `update-existing-tests` task will fix those tests
+- The change makes the module simpler: no pattern matching needed, just list all subdirectories of `.math/backups/`
+- Verified the implementation works manually by creating test directories in `.math/backups/` and running `findArtifacts()`
+- The prune command (`src/commands/prune.ts`) already calls `findArtifacts()` without arguments, so no changes needed there

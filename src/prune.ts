@@ -1,42 +1,33 @@
 import { readdirSync, statSync, rmSync } from "node:fs";
 import { join, basename } from "node:path";
 import { createInterface } from "node:readline/promises";
+import { getBackupsDir } from "./paths.js";
 
 /**
- * Pattern for backup directories created by `math iterate`
- * Matches: todo-{M}-{D}-{Y} or todo-{M}-{D}-{Y}-{N}
- * Examples: todo-1-15-2025, todo-12-31-2024-1, todo-1-1-2026-42
- */
-const BACKUP_DIR_PATTERN = /^todo-\d{1,2}-\d{1,2}-\d{4}(-\d+)?$/;
-
-/**
- * Finds all math artifacts in a directory.
+ * Finds all math artifacts (backup directories) in `.math/backups/`.
  *
- * Artifacts include:
- * - Backup directories matching pattern todo-{M}-{D}-{Y} or todo-{M}-{D}-{Y}-{N}
+ * Scans the `.math/backups/` directory and returns all subdirectories
+ * as artifacts. These are created by `math iterate` with summary-based names.
  *
- * @param directory - The directory to search in (defaults to cwd)
- * @returns Array of absolute paths to artifacts
+ * @returns Array of absolute paths to backup directories
  */
-export function findArtifacts(directory: string = process.cwd()): string[] {
+export function findArtifacts(): string[] {
   const artifacts: string[] = [];
+  const backupsDir = getBackupsDir();
 
   try {
-    const entries = readdirSync(directory);
+    const entries = readdirSync(backupsDir);
 
     for (const entry of entries) {
-      const fullPath = join(directory, entry);
+      const fullPath = join(backupsDir, entry);
 
-      // Check if it's a backup directory
-      if (BACKUP_DIR_PATTERN.test(entry)) {
-        try {
-          const stat = statSync(fullPath);
-          if (stat.isDirectory()) {
-            artifacts.push(fullPath);
-          }
-        } catch {
-          // Skip entries we can't stat (permission issues, etc.)
+      try {
+        const stat = statSync(fullPath);
+        if (stat.isDirectory()) {
+          artifacts.push(fullPath);
         }
+      } catch {
+        // Skip entries we can't stat (permission issues, etc.)
       }
     }
   } catch {
