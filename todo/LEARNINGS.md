@@ -148,3 +148,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Added tests for: legacy directory with multiple files detection, non-matching files in legacy directory, file content preservation after migration, and new directory detection independence from file contents
 - Pattern: when you can't mock internal functions easily, test the behavior at the integration boundary by replicating what the internal function does and verifying pre/post conditions
 - Pre-existing test failures in `src/prune.test.ts` are unrelated - caused by `findArtifacts()` signature change in `update-prune-module` task, will be fixed in `update-existing-tests` task
+
+## add-summary-tests
+
+- Tests already existed in `src/summary.test.ts` with comprehensive coverage (8 tests, 8 expect() calls) - likely created during `add-summary-generator` implementation
+- Existing tests cover all key scenarios: phase name extraction, max 5 words truncation, task ID fallback, special characters handling, ultimate "plan" fallback, empty content, multiple phases (first one used), and numbers in phase names
+- All tests pass - no additional tests needed as the coverage is already comprehensive
+- Pattern: when implementing a module (like `add-summary-generator`), it's valuable to write tests alongside the implementation rather than deferring to a separate test task - this leads to better coverage and faster feedback loops
+- Pre-existing test failures in `src/prune.test.ts` are unrelated - will be fixed in `update-existing-tests` task
