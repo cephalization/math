@@ -52,3 +52,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated agent file paths from `["todo/PROMPT.md", "todo/TASKS.md"]` to `[".math/todo/PROMPT.md", ".math/todo/TASKS.md"]`
 - **Critical test fix**: Tests were creating `todo/` directories (legacy path) which caused `migrateIfNeeded()` to prompt interactively and hang. Updated all test `beforeEach` blocks to create `.math/todo/` structure instead
 - Path construction pattern: used template literals (`${todoDir}/PROMPT.md`) instead of `join()` for simplicity since todoDir is already absolute
+
+## update-plan-command
+
+- Updated `src/commands/plan.ts` to use `getTodoDir()` from paths module instead of `join(process.cwd(), "todo")`
+- Added `migrateIfNeeded()` call at the start of the plan command - important to check before validating directory exists
+- Updated error message from `"todo/ directory not found"` to `".math/todo/ directory not found"` for consistency
+- In `src/plan.ts`, `todoDir` is passed as a parameter, so no paths module import was needed there - just updated console messages
+- Updated two console message locations in `plan.ts`: success message (line 229) and warning message (line 236)
+- Removed unused `join` import from `node:path` since we no longer construct the todoDir path locally
+- No plan-specific tests exist (`src/**/*plan*.test.ts`), so relied on typecheck and existing test suite to verify changes

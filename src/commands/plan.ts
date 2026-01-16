@@ -1,12 +1,16 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { runPlanningMode } from "../plan";
+import { getTodoDir } from "../paths";
+import { migrateIfNeeded } from "../migration";
 
 export async function plan(options: { model?: string; quick?: boolean } = {}) {
-  const todoDir = join(process.cwd(), "todo");
+  // Check for migration from legacy todo/ to .math/todo/
+  await migrateIfNeeded();
+
+  const todoDir = getTodoDir();
 
   if (!existsSync(todoDir)) {
-    throw new Error("todo/ directory not found. Run 'math init' first.");
+    throw new Error(".math/todo/ directory not found. Run 'math init' first.");
   }
 
   await runPlanningMode({

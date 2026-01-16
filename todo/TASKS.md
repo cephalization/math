@@ -55,7 +55,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-plan-command
 
 - content: Update `src/commands/plan.ts` and `src/plan.ts` to use paths module. Add migration check to plan command. Update console messages to reference `.math/todo/` paths.
-- status: pending
+- status: complete
 - dependencies: add-paths-module, add-migration-util
 
 ### update-status-command

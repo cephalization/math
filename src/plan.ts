@@ -226,14 +226,14 @@ Read the attached files and update TASKS.md with a well-structured task list for
       console.log();
       console.log(`${colors.bold}Next steps:${colors.reset}`);
       console.log(
-        `  1. Review ${colors.cyan}todo/TASKS.md${colors.reset} to verify the plan`
+        `  1. Review ${colors.cyan}.math/todo/TASKS.md${colors.reset} to verify the plan`
       );
       console.log(
         `  2. Run ${colors.cyan}math run${colors.reset} to start executing tasks`
       );
     } else {
       console.log(
-        `${colors.yellow}Planning completed with warnings. Check todo/TASKS.md${colors.reset}`
+        `${colors.yellow}Planning completed with warnings. Check .math/todo/TASKS.md${colors.reset}`
       );
     }
   } catch (error) {
