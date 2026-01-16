@@ -67,7 +67,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-tasks-module
 
 - content: Update `src/tasks.ts` default directory from `todo` to `.math/todo` in `readTasks()` and `writeTasks()` functions.
-- status: pending
+- status: complete
 - dependencies: add-paths-module
 
 ---
