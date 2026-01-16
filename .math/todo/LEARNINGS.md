@@ -30,3 +30,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Kept to exactly 2 rows as specified: `.math/todo/` and `.math/backups/<summary>/`
 - Mentioned AI-generated descriptions in the backups row to connect with the earlier `math iterate` explanation
 - No tests needed for documentation-only changes, but ran `bun test` anyway to ensure nothing was accidentally broken
+
+## update-loop-diagram
+
+- The ASCII loop diagram (lines 166-178 in README.md) does NOT reference any file paths, only file names like `TASKS.md` and `PROMPT.md`
+- The diagram accurately reflects the current flow: check tasks → exit if complete → invoke agent → agent works → loop back
+- No changes were needed - the diagram was already correct
+- Verification-only tasks are valid - not all tasks require code changes

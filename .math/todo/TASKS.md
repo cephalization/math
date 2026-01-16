@@ -39,7 +39,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-loop-diagram
 
 - content: Update the ASCII loop diagram in README.md if it references any old paths. Verify the diagram accurately reflects the current flow.
-- status: pending
+- status: complete
 - dependencies: update-readme-paths
 
 ## Phase 2: Help Output Verification
