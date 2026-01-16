@@ -16,3 +16,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Pattern that worked well
 - Anything the next agent should know
 -->
+
+## add-paths-module
+
+- Created simple pure functions using `join(process.cwd(), ...)` pattern - no state, no side effects
+- Followed existing codebase pattern of using `node:path` for path joining
+- Tests verify both the exact paths and the path hierarchy (todo/backups are children of math dir)
+- There's a separate `add-paths-tests` task in Phase 6 - I wrote minimal tests here to validate the implementation works, that task can add more comprehensive tests if needed
+- The module is intentionally minimal - just exports 3 functions with no dependencies on other modules to avoid circular imports when other modules adopt it
