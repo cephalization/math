@@ -1,5 +1,15 @@
 # @cephalization/math
 
+## 0.4.0
+
+### Minor Changes
+
+- 4216057: feat: Move todo directory to .math, migrate files
+
+### Patch Changes
+
+- 57b25a0: documentation
+
 ## 0.3.2
 
 ### Patch Changes

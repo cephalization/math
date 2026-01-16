@@ -1,5 +1,0 @@
----
-"@cephalization/math": patch
----
-
-documentation
