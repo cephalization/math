@@ -4,76 +4,87 @@ import { mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const TEST_DIR = join(import.meta.dir, ".test-prune");
+const BACKUPS_DIR = join(TEST_DIR, ".math", "backups");
+
+// Store original cwd to restore after tests
+let originalCwd: string;
 
 beforeEach(() => {
-  mkdirSync(TEST_DIR, { recursive: true });
+  originalCwd = process.cwd();
+  mkdirSync(BACKUPS_DIR, { recursive: true });
+  process.chdir(TEST_DIR);
 });
 
 afterEach(() => {
+  process.chdir(originalCwd);
   rmSync(TEST_DIR, { recursive: true, force: true });
 });
 
-test("findArtifacts returns empty array for empty directory", () => {
-  const result = findArtifacts(TEST_DIR);
+test("findArtifacts returns empty array for empty .math/backups directory", () => {
+  const result = findArtifacts();
   expect(result).toEqual([]);
 });
 
-test("findArtifacts finds backup directories with basic pattern", () => {
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025"));
-  mkdirSync(join(TEST_DIR, "todo-12-31-2024"));
+test("findArtifacts finds all backup directories in .math/backups", () => {
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
+  mkdirSync(join(BACKUPS_DIR, "auth-setup"));
 
-  const result = findArtifacts(TEST_DIR);
+  const result = findArtifacts();
 
   expect(result).toHaveLength(2);
-  expect(result).toContain(join(TEST_DIR, "todo-1-15-2025"));
-  expect(result).toContain(join(TEST_DIR, "todo-12-31-2024"));
+  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
+  expect(result).toContain(join(BACKUPS_DIR, "auth-setup"));
 });
 
-test("findArtifacts finds backup directories with counter suffix", () => {
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025"));
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025-1"));
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025-42"));
+test("findArtifacts finds backup directories with numeric suffixes", () => {
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure-1"));
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure-42"));
 
-  const result = findArtifacts(TEST_DIR);
+  const result = findArtifacts();
 
   expect(result).toHaveLength(3);
-  expect(result).toContain(join(TEST_DIR, "todo-1-15-2025"));
-  expect(result).toContain(join(TEST_DIR, "todo-1-15-2025-1"));
-  expect(result).toContain(join(TEST_DIR, "todo-1-15-2025-42"));
+  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
+  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure-1"));
+  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure-42"));
 });
 
-test("findArtifacts ignores non-matching directories", () => {
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025"));
-  mkdirSync(join(TEST_DIR, "todo")); // Not a backup
-  mkdirSync(join(TEST_DIR, "node_modules")); // Not a backup
-  mkdirSync(join(TEST_DIR, "todo-invalid")); // Invalid pattern
+test("findArtifacts only returns directories", () => {
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
+  mkdirSync(join(BACKUPS_DIR, "auth-setup"));
+  // Create a file that should be ignored
+  Bun.write(join(BACKUPS_DIR, "some-file.txt"), "not a directory");
 
-  const result = findArtifacts(TEST_DIR);
+  const result = findArtifacts();
+
+  expect(result).toHaveLength(2);
+  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
+  expect(result).toContain(join(BACKUPS_DIR, "auth-setup"));
+});
+
+test("findArtifacts ignores files in .math/backups", () => {
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
+  // Create a file that should be ignored
+  Bun.write(join(BACKUPS_DIR, "readme.md"), "not a directory");
+
+  const result = findArtifacts();
 
   expect(result).toHaveLength(1);
-  expect(result).toContain(join(TEST_DIR, "todo-1-15-2025"));
+  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
 });
 
-test("findArtifacts ignores files matching pattern", () => {
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025"));
-  // Create a file that matches the pattern (should be ignored)
-  Bun.write(join(TEST_DIR, "todo-2-20-2025"), "not a directory");
+test("findArtifacts returns empty array when .math/backups does not exist", () => {
+  // Remove the backups directory
+  rmSync(BACKUPS_DIR, { recursive: true, force: true });
 
-  const result = findArtifacts(TEST_DIR);
-
-  expect(result).toHaveLength(1);
-  expect(result).toContain(join(TEST_DIR, "todo-1-15-2025"));
-});
-
-test("findArtifacts returns empty array for non-existent directory", () => {
-  const result = findArtifacts(join(TEST_DIR, "does-not-exist"));
+  const result = findArtifacts();
   expect(result).toEqual([]);
 });
 
 test("findArtifacts returns absolute paths", () => {
-  mkdirSync(join(TEST_DIR, "todo-1-15-2025"));
+  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
 
-  const result = findArtifacts(TEST_DIR);
+  const result = findArtifacts();
 
   expect(result).toHaveLength(1);
   expect(result[0]).toMatch(/^\//); // Starts with / (absolute path)

@@ -143,7 +143,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-existing-tests
 
 - content: Update existing tests in `src/loop.test.ts`, `src/prune.test.ts`, and other test files to use `.math/` paths. Fix any broken tests due to path changes.
-- status: pending
+- status: complete
 - dependencies: update-run-command, update-prune-module
 
 ### validate-full-workflow
