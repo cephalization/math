@@ -33,7 +33,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-migration-util
 
 - content: Create `src/migration.ts` with a `migrateIfNeeded()` function that checks if legacy `todo/` directory exists (containing PROMPT.md, TASKS.md, LEARNINGS.md), prompts user to migrate to `.math/todo`, and moves files if confirmed. Use readline for interactive prompt. Export this utility for use in commands.
-- status: pending
+- status: complete
 - dependencies: add-paths-module
 
 ---
