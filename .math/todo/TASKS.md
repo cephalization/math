@@ -53,7 +53,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### verify-subcommand-help
 
 - content: Check each subcommand for help text or descriptions that may reference old paths. Review index.ts for any command descriptions that need updating.
-- status: pending
+- status: complete
 - dependencies: verify-cli-help
 
 ## Phase 3: Final Review

@@ -45,3 +45,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - No standalone `todo/` references exist that need updating
 - The help output correctly describes: `init` creates `.math/todo/`, `iterate` backs up to `.math/backups/`, and `prune` deletes from `.math/backups/`
 - Verification-only tasks with no required changes are valid - document findings even when everything is already correct
+
+## verify-subcommand-help
+
+- Reviewed all 6 subcommand files in `src/commands/`: init.ts, run.ts, status.ts, iterate.ts, plan.ts, prune.ts
+- Used `grep "todo/"` to find 30 matches across all .ts files - all are correctly using `.math/todo/` or are intentionally referencing legacy `todo/` in migration code
+- Legacy `todo/` references in src/migration.ts and src/migration.test.ts are intentional - they handle migrating from old paths
+- No changes needed - all subcommand help text and descriptions already use correct `.math/` paths
+- Pattern: when verifying path references, grep for the short form (`todo/`) rather than full form (`.math/todo/`) to catch any missed updates
