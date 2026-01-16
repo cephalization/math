@@ -1,4 +1,5 @@
 import { readTasks, countTasks, findNextTask } from "../tasks";
+import { getTodoDir } from "../paths";
 
 const colors = {
   reset: "\x1b[0m",
@@ -12,7 +13,7 @@ const colors = {
 };
 
 export async function status() {
-  const { tasks } = await readTasks();
+  const { tasks } = await readTasks(getTodoDir());
   const counts = countTasks(tasks);
 
   console.log(`${colors.bold}Task Status${colors.reset}\n`);

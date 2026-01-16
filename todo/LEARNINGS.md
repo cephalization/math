@@ -62,3 +62,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated two console message locations in `plan.ts`: success message (line 229) and warning message (line 236)
 - Removed unused `join` import from `node:path` since we no longer construct the todoDir path locally
 - No plan-specific tests exist (`src/**/*plan*.test.ts`), so relied on typecheck and existing test suite to verify changes
+
+## update-status-command
+
+- Simple change: imported `getTodoDir` from paths module and passed it to `readTasks()`
+- The `readTasks()` function already accepts an optional `todoDir` parameter with a default of `join(process.cwd(), "todo")` - we just needed to pass the new path
+- No migration check needed in this command since it only reads files - migration is handled by commands that modify state (init, plan, run)
+- No status-specific tests exist, so relied on typecheck and running full test suite to verify no regressions
