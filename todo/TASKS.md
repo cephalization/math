@@ -131,7 +131,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### add-migration-tests
 
 - content: Add tests for `src/migration.ts` in `src/migration.test.ts` covering: legacy directory detection, migration prompt, file moving, no-op when already migrated.
-- status: pending
+- status: complete
 - dependencies: add-migration-util
 
 ### add-summary-tests
