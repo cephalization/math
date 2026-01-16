@@ -115,7 +115,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-cli-help
 
 - content: Update `index.ts` help text and command descriptions to reference `.math/` directory structure instead of `todo/`.
-- status: pending
+- status: complete
 - dependencies: none
 
 ---

@@ -124,3 +124,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Relative references to TASKS.md and LEARNINGS.md within the template don't need path prefixes - the template is placed in `.math/todo/` so relative references work correctly
 - No template-specific tests exist in the codebase, and this is a documentation-only change, so no new tests were required
 - Pre-existing test failures in `src/prune.test.ts` are from `update-prune-module` task changing the `findArtifacts()` function signature - will be fixed in `update-existing-tests` task
+
+## update-cli-help
+
+- Updated `index.ts` help text to reference `.math/` directory structure consistently across all commands
+- Changed command descriptions: `init` creates `.math/todo/`, `iterate` backs up `.math/todo/`, `prune` deletes from `.math/backups/`
+- Updated example comment from `todo/` to `.math/todo/`
+- This is a documentation-only change with no behavioral impact - no new tests required
+- Pre-existing test failures in `src/prune.test.ts` are unrelated and will be addressed by `update-existing-tests` task
