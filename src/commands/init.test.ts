@@ -1,23 +1,40 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { existsSync } from "node:fs";
-import { rm, readFile } from "node:fs/promises";
+import { rm, readFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { init } from "./init";
 import { getTodoDir } from "../paths";
 
-describe("init command", () => {
-  const testDir = join(process.cwd(), ".math");
+const TEST_DIR = join(import.meta.dir, ".test-init");
 
-  // Clean up after each test
-  async function cleanup() {
-    if (existsSync(testDir)) {
-      await rm(testDir, { recursive: true });
-    }
+// Store original cwd to restore after tests
+let originalCwd: string;
+
+beforeEach(async () => {
+  originalCwd = process.cwd();
+
+  // Clean up and create fresh test directory
+  if (existsSync(TEST_DIR)) {
+    await rm(TEST_DIR, { recursive: true });
   }
+  await mkdir(TEST_DIR, { recursive: true });
 
+  // Change to test directory so getTodoDir() resolves to test location
+  process.chdir(TEST_DIR);
+});
+
+afterEach(async () => {
+  // Restore original working directory
+  process.chdir(originalCwd);
+
+  // Clean up test directory
+  if (existsSync(TEST_DIR)) {
+    await rm(TEST_DIR, { recursive: true });
+  }
+});
+
+describe("init command", () => {
   test("creates .math/todo directory structure", async () => {
-    await cleanup();
-
     // Run init with skipPlan to avoid interactive prompt
     await init({ skipPlan: true });
 
@@ -30,21 +47,19 @@ describe("init command", () => {
     expect(existsSync(join(todoDir, "PROMPT.md"))).toBe(true);
     expect(existsSync(join(todoDir, "TASKS.md"))).toBe(true);
     expect(existsSync(join(todoDir, "LEARNINGS.md"))).toBe(true);
-
-    await cleanup();
   });
 
   test("uses getTodoDir for path resolution", () => {
-    // Verify getTodoDir returns the expected .math/todo path
+    // Verify getTodoDir returns the expected .math/todo path relative to cwd
     const todoDir = getTodoDir();
     expect(todoDir).toContain(".math");
     expect(todoDir).toContain("todo");
     expect(todoDir.endsWith(".math/todo")).toBe(true);
+    // Should resolve relative to our test directory
+    expect(todoDir.startsWith(TEST_DIR)).toBe(true);
   });
 
-  test("does not create if directory already exists", async () => {
-    await cleanup();
-
+  test("does not overwrite if directory already exists", async () => {
     // First init
     await init({ skipPlan: true });
 
@@ -60,7 +75,5 @@ describe("init command", () => {
     // Verify content was not overwritten
     const newContent = await readFile(join(todoDir, "TASKS.md"), "utf-8");
     expect(newContent).toBe("modified content");
-
-    await cleanup();
   });
 });
