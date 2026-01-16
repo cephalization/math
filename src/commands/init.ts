@@ -7,6 +7,7 @@ import {
   LEARNINGS_TEMPLATE,
 } from "../templates";
 import { runPlanningMode, askToRunPlanning } from "../plan";
+import { getTodoDir } from "../paths";
 
 const colors = {
   reset: "\x1b[0m",
@@ -18,16 +19,16 @@ const colors = {
 export async function init(
   options: { skipPlan?: boolean; model?: string } = {}
 ) {
-  const todoDir = join(process.cwd(), "todo");
+  const todoDir = getTodoDir();
 
   if (existsSync(todoDir)) {
     console.log(
-      `${colors.yellow}todo/ directory already exists${colors.reset}`
+      `${colors.yellow}.math/todo/ directory already exists${colors.reset}`
     );
     return;
   }
 
-  // Create todo directory
+  // Create .math/todo directory (recursive creates .math too)
   await mkdir(todoDir, { recursive: true });
 
   // Write template files
@@ -35,7 +36,7 @@ export async function init(
   await Bun.write(join(todoDir, "TASKS.md"), TASKS_TEMPLATE);
   await Bun.write(join(todoDir, "LEARNINGS.md"), LEARNINGS_TEMPLATE);
 
-  console.log(`${colors.green}✓${colors.reset} Created todo/ directory with:`);
+  console.log(`${colors.green}✓${colors.reset} Created .math/todo/ directory with:`);
   console.log(
     `  ${colors.cyan}PROMPT.md${colors.reset}    - System prompt with guardrails`
   );
@@ -54,10 +55,10 @@ export async function init(
   console.log();
   console.log(`Next steps:`);
   console.log(
-    `  1. Edit ${colors.cyan}todo/TASKS.md${colors.reset} to add your tasks`
+    `  1. Edit ${colors.cyan}.math/todo/TASKS.md${colors.reset} to add your tasks`
   );
   console.log(
-    `  2. Customize ${colors.cyan}todo/PROMPT.md${colors.reset} for your project`
+    `  2. Customize ${colors.cyan}.math/todo/PROMPT.md${colors.reset} for your project`
   );
   console.log(
     `  3. Run ${colors.cyan}math run${colors.reset} to start the agent loop`
