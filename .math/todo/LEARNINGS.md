@@ -23,3 +23,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The old date-based format `todo-{M}-{D}-{Y}/` has been replaced with AI-generated summary names in `.math/backups/<summary>/`
 - Added a brief explanation of what `<summary>` means (AI-generated short description) with examples like `add-user-auth`, `fix-api-bugs`
 - Use `grep` to verify all path references are updated after making changes
+
+## add-directory-structure-table
+
+- Placed the directory structure table under Core Concept section as a "### Directory Structure" subsection since that's where document organization is already discussed
+- Kept to exactly 2 rows as specified: `.math/todo/` and `.math/backups/<summary>/`
+- Mentioned AI-generated descriptions in the backups row to connect with the earlier `math iterate` explanation
+- No tests needed for documentation-only changes, but ran `bun test` anyway to ensure nothing was accidentally broken

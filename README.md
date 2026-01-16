@@ -14,6 +14,13 @@ The primary responsibility of this harness is to **reduce context bloat** by dig
 
 The harness consists of a simple for-loop, executing a new coding agent with a mandate from `PROMPT.md` to complete a *single* task from `TASKS.md`, while reading and recording any insight gained during the work into `LEARNINGS.md`.
 
+### Directory Structure
+
+| Path | Description |
+| ---- | ----------- |
+| `.math/todo/` | Active sprint files (PROMPT.md, TASKS.md, LEARNINGS.md) |
+| `.math/backups/<summary>/` | Archived sprints from `math iterate`, named with AI-generated descriptions |
+
 ## Requirements
 
 **[Bun](https://bun.sh) is required** to run this tool. Node.js is not supported.
