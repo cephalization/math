@@ -93,7 +93,7 @@ Each agent picks the next pending task, implements it, and marks it complete.
 ### update-prune-module
 
 - content: Update `src/prune.ts` to find artifacts only within `.math/backups/` directory instead of cwd. Update `BACKUP_DIR_PATTERN` or remove it since we now look in a specific directory. Update `findArtifacts()` to scan `.math/backups/` subdirectories.
-- status: pending
+- status: complete
 - dependencies: add-paths-module
 
 ### update-prune-command
