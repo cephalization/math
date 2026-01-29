@@ -3,6 +3,23 @@
 Task tracker for dex integration into math.
 Replace markdown-based task management with dex CLI.
 
+## How to Use
+
+1. Find the first task with `status: pending` where ALL dependencies have `status: complete`
+2. Change that task's status to `in_progress`
+3. Implement the task
+4. Write and run tests
+5. Change the task's status to `complete`
+6. Append learnings to LEARNINGS.md
+7. Commit with message: `feat: <task-id> - <description>`
+8. EXIT
+
+## Task Statuses
+
+- `pending` - Not started
+- `in_progress` - Currently being worked on
+- `complete` - Done and committed
+
 ---
 
 ## Phase 1: Core Dex Integration
