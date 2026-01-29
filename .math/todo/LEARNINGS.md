@@ -140,3 +140,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The template in `src/templates.ts` has generic placeholders (`<your-test-command>`, etc.) for new projects, but the live PROMPT.md should have actual commands
 - Documentation-only task - no code changes, no new tests needed
 - Pre-existing 13 test failures (loop.test.ts, init.test.ts) are unrelated to this task and documented in previous learnings
+
+## add-dex-tests
+
+- Created `src/dex.test.ts` with 22 unit tests covering the dex module
+- Tests focus on type interfaces, JSON parsing, and simulated function behavior since actual dex CLI calls are difficult to mock
+- Used pattern of "simulate" functions that replicate the error handling logic without actual shell calls
+- Tested `DexTask`, `DexTaskDetails`, and `DexStatus` interfaces with sample JSON responses
+- Archive output parsing tests verify regex extraction of "Archived N task(s)" format
+- Edge case tests cover: all optional fields populated, nested children in subtasks, malformed JSON handling
+- All 22 tests pass independently; pre-existing 13 failures in loop.test.ts and init.test.ts are separate tasks (`update-loop-tests`, `update-init-tests`)
+- Pattern: when mocking shell commands isn't practical, test the JSON parsing and error handling logic by simulating command outcomes
