@@ -7,6 +7,7 @@ import { iterate } from "./src/commands/iterate";
 import { plan } from "./src/commands/plan";
 import { prune } from "./src/commands/prune";
 import { DEFAULT_MODEL } from "./src/constants";
+import { migrateTasksToDexIfNeeded } from "./src/migrate-to-dex";
 
 // ANSI colors
 const colors = {
@@ -97,6 +98,13 @@ function parseArgs(args: string[]): Record<string, string | boolean> {
 async function main() {
   const [command, ...rest] = Bun.argv.slice(2);
   const options = parseArgs(rest);
+
+  // Check for migration before any command except help
+  const isHelpCommand =
+    command === "help" || command === "--help" || command === "-h" || command === undefined;
+  if (!isHelpCommand) {
+    await migrateTasksToDexIfNeeded();
+  }
 
   try {
     switch (command) {

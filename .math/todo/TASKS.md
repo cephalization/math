@@ -65,7 +65,7 @@ Replace markdown-based task management with dex CLI.
 ### integrate-dex-migration-check
 
 - content: Modify `index.ts` to call `migrateTasksToDexIfNeeded()` before executing any command except `help`. Import the function from `src/migrate-to-dex.ts`. Place the check in `main()` after parsing args but before the switch statement. If migration returns "exit" choice, the function already calls `process.exit(0)`. For "port" or "archive", continue to the requested command. This ensures any existing TASKS.md users are prompted on first run of any math command.
-- status: pending
+- status: complete
 - dependencies: add-dex-migration-execution
 
 ### add-dex-migration-tests
