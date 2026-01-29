@@ -53,7 +53,7 @@ Replace markdown-based task management with dex CLI.
 ### add-dex-migration-prompt
 
 - content: Create `src/migrate-to-dex.ts` module that handles the TASKS.md to dex migration flow. Implement `checkNeedsDexMigration()` that returns true if `.math/todo/TASKS.md` exists AND `.dex/` does not exist (or is empty). Implement `promptDexMigration()` that displays an interactive menu with three options: (1) "Port existing tasks to dex" - imports all TASKS.md tasks preserving metadata, (2) "Archive and start fresh" - moves `.math/todo/` to `.math/backups/<timestamp>-pre-dex/` and initializes clean dex, (3) "Exit" - prints message explaining dex is required and suggests downgrading to version 0.4.0 from package.json. Use `createInterface` from `node:readline/promises` for the prompt. Return an enum indicating the user's choice.
-- status: pending
+- status: complete
 - dependencies: add-tasks-to-dex-migration
 
 ### add-dex-migration-execution
