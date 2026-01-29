@@ -37,3 +37,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Existing loop.test.ts tests will fail because they rely on TASKS.md file format - these tests will be updated in `update-loop-tests` task
 - Non-loop tests (84 tests) continue to pass, loop tests (11 tests) are expected to fail until mocked
 - The loop still references TASKS.md in the prompt and files array - this will be updated when PROMPT.md template is updated
+
+## update-status-command
+
+- Replaced imports from `src/tasks.ts` with imports from `src/dex.ts`: `dexStatus()` for counts, `dexListReady()` for next task
+- `DexStatus.stats` uses `completed` (not `complete`), `inProgress` (not `in_progress`), and includes `pending`, `blocked`, `ready` counts
+- Added guard for division by zero when `stats.total === 0` in progress bar width calculation
+- `dexStatus()` includes `inProgressTasks` array directly, no need to filter separately
+- `dexListReady()` returns tasks sorted by priority, so first element is the next task to work on
+- The status command uses `task.name` (from DexTask) instead of `task.content` (from old Task interface)

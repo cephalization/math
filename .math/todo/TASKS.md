@@ -39,7 +39,7 @@ Replace markdown-based task management with dex CLI.
 ### update-status-command
 
 - content: Rewrite `src/commands/status.ts` to use dex. Call `dexStatus()` for counts and display using existing progress bar format. Call `dexListReady()` to show next available task. Remove dependency on `src/tasks.ts` functions.
-- status: pending
+- status: complete
 - dependencies: add-dex-module
 
 ## Phase 2: Migration Support
