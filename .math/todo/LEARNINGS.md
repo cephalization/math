@@ -55,3 +55,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - For completed tasks, used `--result "Migrated from TASKS.md"` to provide context
 - Added `importAllTasksToDex` helper function that returns a `MigrationReport` with success/failure counts
 - Type imports require `type` keyword due to `verbatimModuleSyntax` in tsconfig
+
+## add-dex-migration-prompt
+
+- Used `node:readline/promises` `createInterface` for interactive prompts - cleaner async/await pattern than callback-based readline
+- `checkNeedsDexMigration()` checks both TASKS.md existence AND `.dex/tasks.jsonl` emptiness/absence to determine if migration needed
+- Used `getDexDir()` from dex module which returns null when dex directory doesn't exist (dex dir command fails)
+- Exported `MigrationChoice` as enum with values `Port`, `Archive`, `Exit` for type-safe choice handling
+- Keep colors object local to module for console output styling - pattern used across other commands
+- The 11 loop.test.ts failures are expected and documented in learnings - they depend on TASKS.md workflow and will be fixed in update-loop-tests task
