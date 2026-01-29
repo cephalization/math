@@ -75,3 +75,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - `migrateTasksToDexIfNeeded()` is the main orchestration function - returns `MigrationChoice | undefined` to indicate what action was taken
 - Exit handler uses `process.exit(0)` after printing downgrade instructions - clean exit, not an error
 - Timestamp format uses ISO format with colons/periods replaced by dashes for filesystem compatibility (e.g., `2026-01-29T14-14-58-pre-dex`)
+
+## integrate-dex-migration-check
+
+- Migration check is placed in `main()` after parsing args but before the switch statement, ensuring it runs early
+- Help commands (`help`, `--help`, `-h`, `undefined`) are excluded from migration check to allow users to see help even before migration
+- `migrateTasksToDexIfNeeded()` handles all the orchestration internally - just need to call it and let it run
+- If user selects "Exit", the function calls `process.exit(0)` internally, so no return value handling needed for that case
+- For "port" or "archive" choices, the function returns and execution continues to the requested command
+- 11 loop.test.ts failures are pre-existing (documented in previous learnings) and will be fixed in `update-loop-tests` task
