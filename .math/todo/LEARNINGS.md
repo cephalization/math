@@ -46,3 +46,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - `dexStatus()` includes `inProgressTasks` array directly, no need to filter separately
 - `dexListReady()` returns tasks sorted by priority, so first element is the next task to work on
 - The status command uses `task.name` (from DexTask) instead of `task.content` (from old Task interface)
+
+## add-tasks-to-dex-migration
+
+- Reused `parseTasks` from `src/tasks.ts` directly in `parseTasksForMigration` - no need to duplicate parsing logic
+- `importTaskToDex` runs dex commands sequentially: add task, set dependencies, update status
+- Dex block command uses `--by` flag: `dex block <task-id> --by <dependency-id>`
+- For completed tasks, used `--result "Migrated from TASKS.md"` to provide context
+- Added `importAllTasksToDex` helper function that returns a `MigrationReport` with success/failure counts
+- Type imports require `type` keyword due to `verbatimModuleSyntax` in tsconfig

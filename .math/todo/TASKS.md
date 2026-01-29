@@ -47,7 +47,7 @@ Replace markdown-based task management with dex CLI.
 ### add-tasks-to-dex-migration
 
 - content: Create `src/migrate-tasks.ts` module with functions to convert TASKS.md tasks to dex format. Implement `parseTasksForMigration(content: string)` that reuses parsing logic from `src/tasks.ts` to extract tasks with full metadata (id, content, status, dependencies). Implement `importTaskToDex(task: Task)` that runs `dex add "<content>" --id <id>` for each task. For dependencies, use `dex block <id> --by <dep-id>` for each dependency. For status, map `complete` to `dex complete <id>`, `in_progress` to `dex start <id>`. Return a report of imported tasks with any errors.
-- status: pending
+- status: complete
 - dependencies: add-dex-module
 
 ### add-dex-migration-prompt
