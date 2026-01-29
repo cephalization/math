@@ -4,20 +4,33 @@ You are a coding agent implementing tasks one at a time.
 
 ## Your Mission
 
-Implement ONE task from TASKS.md, test it, commit it, log your learnings, then EXIT.
+Implement ONE task from dex, test it, commit it, log your learnings, then EXIT.
 
 ## The Loop
 
-1. **Read TASKS.md** - Find the first task with `status: pending` where ALL dependencies have `status: complete`
-2. **Mark in_progress** - Update the task's status to `in_progress` in TASKS.md
-3. **Implement** - Write the code following the project's patterns. Use prior learnings to your advantage.
-4. **Write tests** - For behavioral code changes, create unit tests in the appropriate directory. Skip for documentation-only tasks.
-5. **Run tests** - Execute `bun test` (ensures existing tests still pass)
-6. **Fix failures** - If tests fail, debug and fix. DO NOT PROCEED WITH FAILING TESTS.
-7. **Mark complete** - Update the task's status to `complete` in TASKS.md
-8. **Log learnings** - Append insights to `.math/todo/LEARNINGS.md`
-9. **Commit** - Stage and commit: `git add -A && git commit -m "feat: <task-id> - <description>"`
-10. **EXIT** - Stop. The loop will reinvoke you for the next task.
+1. **Find work** - Run `dex list --ready` to see tasks with all dependencies complete
+2. **Start task** - Run `dex start <id>` to mark the task in-progress
+3. **Get context** - Run `dex show <id>` for full task details and context
+4. **Implement** - Write the code following the project's patterns. Use prior learnings to your advantage.
+5. **Write tests** - For behavioral code changes, create unit tests in the appropriate directory. Skip for documentation-only tasks.
+6. **Run tests** - Execute `bun test` (ensures existing tests still pass)
+7. **Fix failures** - If tests fail, debug and fix. DO NOT PROCEED WITH FAILING TESTS.
+8. **Complete task** - Run `dex complete <id> --result "Brief summary of what was done"`
+9. **Log learnings** - Append insights to `.math/todo/LEARNINGS.md`
+10. **Commit** - Stage and commit: `git add -A && git commit -m "feat: <task-id> - <description>"`
+11. **EXIT** - Stop. The loop will reinvoke you for the next task.
+
+---
+
+## Dex Commands
+
+| Command | Purpose |
+|---------|---------|
+| `dex list --ready` | Show tasks ready to work on (deps complete) |
+| `dex start <id>` | Mark task as in-progress |
+| `dex show <id>` | Get full task details |
+| `dex complete <id> --result "..."` | Mark task complete with summary |
+| `dex status` | Show overall progress |
 
 ---
 
@@ -39,12 +52,13 @@ READ THESE CAREFULLY. They are guardrails that prevent common mistakes.
 
 ### SIGN: Dependencies Matter
 
-Before starting a task, verify ALL its dependencies have `status: complete`.
+Only work on tasks returned by `dex list --ready`.
+These are tasks with all dependencies already complete.
 
 ```
 ❌ WRONG: Start task with pending dependencies
-✅ RIGHT: Check deps, proceed only if all complete
-✅ RIGHT: If deps not complete, EXIT with clear error message
+✅ RIGHT: Use `dex list --ready` to find eligible tasks
+✅ RIGHT: If no ready tasks, EXIT with clear message
 ```
 
 Do NOT skip ahead. Do NOT work on tasks out of order.
@@ -103,7 +117,7 @@ Only commit AFTER tests pass.
 | Commit | `git commit -m "feat: ..."` |
 
 **Directory Structure:**
-- `.math/todo/` - Active sprint files (PROMPT.md, TASKS.md, LEARNINGS.md)
+- `.math/todo/` - Active sprint files (PROMPT.md, LEARNINGS.md)
 - `.math/backups/<summary>/` - Archived sprints from `math iterate`
 
 ---

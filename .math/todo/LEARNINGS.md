@@ -132,3 +132,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated Directory Structure to remove TASKS.md reference (now just PROMPT.md, LEARNINGS.md)
 - No tests for template content itself - changes are documentation-only
 - Pre-existing test failures (13 in loop.test.ts and init.test.ts) are unrelated - they're from dex integration and will be fixed in `update-loop-tests` and `update-init-tests` tasks
+
+## update-existing-prompt-md
+
+- Updated `.math/todo/PROMPT.md` with dex instructions matching the new `PROMPT_TEMPLATE` from `src/templates.ts`
+- Key customization: kept project-specific Quick Reference commands (`bun test`, `bun run typecheck`, `bun ./index.ts <command>`) rather than using placeholders
+- The template in `src/templates.ts` has generic placeholders (`<your-test-command>`, etc.) for new projects, but the live PROMPT.md should have actual commands
+- Documentation-only task - no code changes, no new tests needed
+- Pre-existing 13 test failures (loop.test.ts, init.test.ts) are unrelated to this task and documented in previous learnings

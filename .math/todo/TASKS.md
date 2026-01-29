@@ -99,7 +99,7 @@ Replace markdown-based task management with dex CLI.
 ### update-existing-prompt-md
 
 - content: Update the current `.math/todo/PROMPT.md` file with dex instructions matching the new template. This is the live file agents will read during this integration work.
-- status: pending
+- status: complete
 - dependencies: update-prompt-template
 
 ## Phase 5: Cleanup and Tests
