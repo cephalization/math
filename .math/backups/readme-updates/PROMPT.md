@@ -12,10 +12,10 @@ Implement ONE task from TASKS.md, test it, commit it, log your learnings, then E
 2. **Mark in_progress** - Update the task's status to `in_progress` in TASKS.md
 3. **Implement** - Write the code following the project's patterns. Use prior learnings to your advantage.
 4. **Write tests** - For behavioral code changes, create unit tests in the appropriate directory. Skip for documentation-only tasks.
-5. **Run tests** - Execute `bun test` (ensures existing tests still pass)
+5. **Run tests** - Execute tests from the package directory (ensures existing tests still pass)
 6. **Fix failures** - If tests fail, debug and fix. DO NOT PROCEED WITH FAILING TESTS.
 7. **Mark complete** - Update the task's status to `complete` in TASKS.md
-8. **Log learnings** - Append insights to `.math/todo/LEARNINGS.md`
+8. **Log learnings** - Append insights to LEARNINGS.md
 9. **Commit** - Stage and commit: `git add -A && git commit -m "feat: <task-id> - <description>"`
 10. **EXIT** - Stop. The loop will reinvoke you for the next task.
 
@@ -53,7 +53,7 @@ Do NOT skip ahead. Do NOT work on tasks out of order.
 
 ### SIGN: Learnings are Required
 
-Before exiting, append to `.math/todo/LEARNINGS.md`:
+Before exiting, append to `LEARNINGS.md`:
 
 ```markdown
 ## <task-id>
