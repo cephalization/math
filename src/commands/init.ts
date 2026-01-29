@@ -30,7 +30,7 @@ export async function init(
   const dexAvailable = await isDexAvailable();
   if (!dexAvailable) {
     console.log(
-      `${colors.yellow}Warning: dex CLI not found. Install with: cargo install dex-cli${colors.reset}`
+      `${colors.yellow}Warning: dex CLI not found. Install from: https://dex.rip/${colors.reset}`
     );
     console.log(
       `${colors.yellow}Tasks will need to be managed manually until dex is installed.${colors.reset}`

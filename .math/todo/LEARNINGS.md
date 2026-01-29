@@ -198,3 +198,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Changed from `cargo install dex-cli` + GitHub link to `cortesi/dex` to just `https://dex.rip/`
 - Simplified the error message from 3 lines to 2 lines since only one URL is needed now
 - All 152 tests pass - this was a string-only change with no behavioral impact
+
+## fix-init-dex-reference
+
+- Updated `src/commands/init.ts` line 33 warning message for missing dex CLI
+- Changed from `Install with: cargo install dex-cli` to `Install from: https://dex.rip/`
+- Verified the test output shows the new URL correctly
+- All 152 tests pass - string-only change with no behavioral impact
