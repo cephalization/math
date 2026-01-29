@@ -23,20 +23,20 @@ const colors = {
 
 function printHelp() {
   console.log(`
-${colors.bold}math${colors.reset} - Multi-Agent Todo Harness
+${colors.bold}math${colors.reset} - Multi-Agent Task Harness
 
 A light meta agent orchestration harness designed to coordinate multiple AI 
-agents working together to accomplish tasks from a TODO list.
+agents working together to accomplish tasks managed by dex.
 
 ${colors.bold}USAGE${colors.reset}
   math <command> [options]
 
 ${colors.bold}COMMANDS${colors.reset}
-  ${colors.cyan}init${colors.reset}      Create .math/todo/ directory with template files
+  ${colors.cyan}init${colors.reset}      Initialize dex and create .math/todo/ with template files
   ${colors.cyan}plan${colors.reset}      Run planning mode to flesh out tasks
   ${colors.cyan}run${colors.reset}       Start the agent loop until all tasks complete
-  ${colors.cyan}status${colors.reset}    Show current task counts
-  ${colors.cyan}iterate${colors.reset}   Backup .math/todo/ and reset for a new sprint
+  ${colors.cyan}status${colors.reset}    Show current task counts from dex
+  ${colors.cyan}iterate${colors.reset}   Archive completed tasks and reset for a new sprint
   ${colors.cyan}prune${colors.reset}     Delete backup artifacts from .math/backups/
   ${colors.cyan}help${colors.reset}      Show this help message
 
@@ -49,6 +49,13 @@ ${colors.bold}OPTIONS${colors.reset}
   ${colors.dim}--quick${colors.reset}                Skip clarifying questions in plan mode
   ${colors.dim}--force${colors.reset}                Skip confirmation prompts (prune)
 
+${colors.bold}TASK MANAGEMENT${colors.reset}
+  Tasks are managed by dex. Use dex commands directly to view and manage tasks:
+  ${colors.dim}dex list --ready${colors.reset}        Show tasks ready to work on
+  ${colors.dim}dex status${colors.reset}              Show overall progress
+  ${colors.dim}dex show <id>${colors.reset}           Get full task details
+  ${colors.dim}dex add "<content>"${colors.reset}     Add a new task
+
 ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Initialize and plan a new project${colors.reset}
   math init
@@ -56,7 +63,7 @@ ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Initialize without planning${colors.reset}
   math init --no-plan
 
-  ${colors.dim}# Run planning mode on existing .math/todo/${colors.reset}
+  ${colors.dim}# Run planning mode on existing tasks${colors.reset}
   math plan
 
   ${colors.dim}# Quick planning without clarifying questions${colors.reset}
@@ -71,7 +78,7 @@ ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Check task status${colors.reset}
   math status
 
-  ${colors.dim}# Start a new sprint (backup current, reset, plan)${colors.reset}
+  ${colors.dim}# Start a new sprint (archive completed, reset learnings, plan)${colors.reset}
   math iterate
 `);
 }
