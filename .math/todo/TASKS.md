@@ -93,7 +93,7 @@ Replace markdown-based task management with dex CLI.
 ### update-prompt-template
 
 - content: Rewrite `PROMPT_TEMPLATE` in `src/templates.ts` to instruct agents on dex usage. The new prompt should explain: run `dex list --ready` to find work, run `dex start <id>` before starting, run `dex show <id>` for full context, run `dex complete <id> --result "..."` when done. Keep the existing signs (One Task Only, Learnings Required, Commit Format, Don't Over-Engineer). Remove TASKS.md references. Keep LEARNINGS.md workflow.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### update-existing-prompt-md
