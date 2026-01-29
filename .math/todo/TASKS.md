@@ -71,7 +71,7 @@ Replace markdown-based task management with dex CLI.
 ### add-dex-migration-tests
 
 - content: Create `src/migrate-to-dex.test.ts` with unit tests. Test `checkNeedsDexMigration()` returns true when TASKS.md exists and .dex/ doesn't. Test `parseTasksForMigration()` correctly parses tasks with all metadata (pending, in_progress, complete statuses and dependencies). Test `importTaskToDex()` generates correct dex commands for different task states. Mock `Bun.$` shell calls and file system operations. Test the archive flow creates proper backup directory structure.
-- status: pending
+- status: complete
 - dependencies: add-dex-migration-execution
 
 ## Phase 3: Init and Setup

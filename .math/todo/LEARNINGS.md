@@ -84,3 +84,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - If user selects "Exit", the function calls `process.exit(0)` internally, so no return value handling needed for that case
 - For "port" or "archive" choices, the function returns and execution continues to the requested command
 - 11 loop.test.ts failures are pre-existing (documented in previous learnings) and will be fixed in `update-loop-tests` task
+
+## add-dex-migration-tests
+
+- Replaced integration tests for `importTaskToDex` with mocked unit tests to avoid dependency on dex CLI availability
+- Used in-test mock modules that track executed commands rather than actually running dex commands
+- Mock approach: create a mock function that records what dex commands would be called (dex add, dex block, dex complete, dex start)
+- Tests verify correct command sequence: add task first, then set dependencies via block, then update status
+- Added tests for error cases: failure on add, failure on block (dependency not found)
+- Existing tests for `checkNeedsDexMigration()`, `parseTasksForMigration()`, and archive backup structure already had good coverage
+- Pre-existing 11 loop.test.ts failures are unrelated - they're from dex integration in loop.ts and will be fixed in `update-loop-tests` task
