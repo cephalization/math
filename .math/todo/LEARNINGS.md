@@ -117,3 +117,18 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Added `isDexAvailable()` check at start of iterate to fail fast with helpful error message
 - The archive output parsing uses regex to extract count from "Archived N task(s)" format - returns 0 if no match
 - No iterate.test.ts exists, so no test updates needed for this task
+
+## update-prompt-template
+
+- Rewrote `PROMPT_TEMPLATE` in `src/templates.ts` to replace TASKS.md-based workflow with dex commands
+- Key changes to "The Loop" section: replaced steps about reading/updating TASKS.md with dex equivalents:
+  - `dex list --ready` to find eligible tasks
+  - `dex start <id>` to mark in-progress
+  - `dex show <id>` for full task context
+  - `dex complete <id> --result "..."` to mark complete
+- Added new "Dex Commands" reference table with all key dex commands and their purposes
+- Updated "Dependencies Matter" sign to reference `dex list --ready` instead of manual status checking
+- Kept all four existing signs intact: One Task Only, Learnings Required, Commit Format, Don't Over-Engineer
+- Updated Directory Structure to remove TASKS.md reference (now just PROMPT.md, LEARNINGS.md)
+- No tests for template content itself - changes are documentation-only
+- Pre-existing test failures (13 in loop.test.ts and init.test.ts) are unrelated - they're from dex integration and will be fixed in `update-loop-tests` and `update-init-tests` tasks
