@@ -107,7 +107,7 @@ Replace markdown-based task management with dex CLI.
 ### remove-tasks-module
 
 - content: Delete `src/tasks.ts` since dex replaces all its functionality. Update any remaining imports that reference it. The Task interface and parsing logic are no longer needed. Note: Keep the parsing logic accessible in `src/migrate-tasks.ts` for migration purposes, or copy the necessary functions there before deletion.
-- status: pending
+- status: complete
 - dependencies: update-loop-for-dex, update-status-command, add-dex-migration-tests
 
 ### add-dex-tests

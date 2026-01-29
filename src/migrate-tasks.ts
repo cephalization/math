@@ -1,5 +1,15 @@
 import { $ } from "bun";
-import { type Task, parseTasks } from "./tasks";
+
+/**
+ * Task interface for migration purposes.
+ * Represents a task from TASKS.md format.
+ */
+export interface Task {
+  id: string;
+  content: string;
+  status: "pending" | "in_progress" | "complete";
+  dependencies: string[];
+}
 
 /**
  * Result of importing a single task to dex
@@ -21,8 +31,87 @@ export interface MigrationReport {
 }
 
 /**
+ * Parse TASKS.md file and extract all tasks.
+ * 
+ * Expected format:
+ * ### task-id
+ * - content: Description of the task
+ * - status: pending | in_progress | complete
+ * - dependencies: task-1, task-2
+ */
+export function parseTasks(content: string): Task[] {
+  const tasks: Task[] = [];
+  const lines = content.split("\n");
+
+  let currentTask: Partial<Task> | null = null;
+
+  for (const line of lines) {
+    // New task starts with ### task-id
+    const taskMatch = line.match(/^###\s+(.+)$/);
+    if (taskMatch && taskMatch[1]) {
+      // Save previous task if exists
+      if (currentTask?.id) {
+        tasks.push({
+          id: currentTask.id,
+          content: currentTask.content || "",
+          status: currentTask.status || "pending",
+          dependencies: currentTask.dependencies || [],
+        });
+      }
+      currentTask = { id: taskMatch[1].trim() };
+      continue;
+    }
+
+    if (!currentTask) continue;
+
+    // Parse content line
+    const contentMatch = line.match(/^-\s+content:\s*(.+)$/);
+    if (contentMatch && contentMatch[1]) {
+      currentTask.content = contentMatch[1].trim();
+      continue;
+    }
+
+    // Parse status line
+    const statusMatch = line.match(
+      /^-\s+status:\s*(pending|in_progress|complete)$/
+    );
+    if (statusMatch && statusMatch[1]) {
+      currentTask.status = statusMatch[1] as Task["status"];
+      continue;
+    }
+
+    // Parse dependencies line
+    const depsMatch = line.match(/^-\s+dependencies:\s*(.*)$/);
+    if (depsMatch && depsMatch[1]) {
+      const deps = depsMatch[1].trim();
+      if (deps && deps.toLowerCase() !== "none") {
+        currentTask.dependencies = deps
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean);
+      } else {
+        currentTask.dependencies = [];
+      }
+      continue;
+    }
+  }
+
+  // Don't forget the last task
+  if (currentTask?.id) {
+    tasks.push({
+      id: currentTask.id,
+      content: currentTask.content || "",
+      status: currentTask.status || "pending",
+      dependencies: currentTask.dependencies || [],
+    });
+  }
+
+  return tasks;
+}
+
+/**
  * Parse TASKS.md content for migration purposes.
- * Reuses the existing parseTasks function from src/tasks.ts.
+ * Alias for parseTasks for backwards compatibility.
  */
 export function parseTasksForMigration(content: string): Task[] {
   return parseTasks(content);
