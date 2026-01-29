@@ -1,8 +1,12 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { join } from "node:path";
-import { getTodoDir } from "./paths";
+import { $ } from "bun";
+import { getTodoDir, getBackupsDir } from "./paths";
 import { getDexDir } from "./dex";
+import { parseTasks } from "./tasks";
+import { importTaskToDex, type MigrationReport } from "./migrate-tasks";
+import { PROMPT_TEMPLATE, LEARNINGS_TEMPLATE } from "./templates";
 
 /**
  * Migration choice enum
@@ -124,4 +128,205 @@ export async function promptDexMigration(): Promise<MigrationChoice> {
   } finally {
     rl.close();
   }
+}
+
+/**
+ * Execute the chosen migration action.
+ */
+export async function executeDexMigration(
+  choice: MigrationChoice
+): Promise<void> {
+  const colors = {
+    reset: "\x1b[0m",
+    bold: "\x1b[1m",
+    cyan: "\x1b[36m",
+    yellow: "\x1b[33m",
+    green: "\x1b[32m",
+    red: "\x1b[31m",
+    dim: "\x1b[2m",
+  };
+
+  switch (choice) {
+    case MigrationChoice.Port:
+      await executePortMigration(colors);
+      break;
+    case MigrationChoice.Archive:
+      await executeArchiveMigration(colors);
+      break;
+    case MigrationChoice.Exit:
+      executeExitWithDowngrade(colors);
+      break;
+  }
+}
+
+/**
+ * Port existing TASKS.md tasks to dex
+ */
+async function executePortMigration(colors: Record<string, string>): Promise<void> {
+  const todoDir = getTodoDir();
+  const tasksPath = join(todoDir, "TASKS.md");
+
+  console.log();
+  console.log(`${colors.cyan}Porting tasks to dex...${colors.reset}`);
+
+  // Step 1: Initialize dex
+  console.log(`${colors.dim}  Initializing dex...${colors.reset}`);
+  const initResult = await $`dex init -y`.quiet();
+  if (initResult.exitCode !== 0) {
+    console.log(
+      `${colors.red}Failed to initialize dex: ${initResult.stderr.toString()}${colors.reset}`
+    );
+    process.exit(1);
+  }
+
+  // Step 2: Read and parse TASKS.md
+  console.log(`${colors.dim}  Reading TASKS.md...${colors.reset}`);
+  const content = await Bun.file(tasksPath).text();
+  const tasks = parseTasks(content);
+
+  if (tasks.length === 0) {
+    console.log(`${colors.yellow}  No tasks found in TASKS.md${colors.reset}`);
+  } else {
+    // Step 3: Import each task
+    console.log(`${colors.dim}  Importing ${tasks.length} tasks...${colors.reset}`);
+    const report: MigrationReport = {
+      total: tasks.length,
+      successful: 0,
+      failed: 0,
+      results: [],
+    };
+
+    for (const task of tasks) {
+      const result = await importTaskToDex(task);
+      report.results.push(result);
+      if (result.success) {
+        report.successful++;
+        console.log(`${colors.green}    ✓ ${task.id}${colors.reset}`);
+      } else {
+        report.failed++;
+        console.log(
+          `${colors.red}    ✗ ${task.id}: ${result.error}${colors.reset}`
+        );
+      }
+    }
+
+    // Report summary
+    console.log();
+    console.log(
+      `${colors.bold}Migration complete:${colors.reset} ${report.successful}/${report.total} tasks imported`
+    );
+
+    if (report.failed > 0) {
+      console.log(
+        `${colors.yellow}Warning: ${report.failed} tasks failed to import${colors.reset}`
+      );
+    }
+  }
+
+  // Step 4: Delete TASKS.md on success
+  console.log(`${colors.dim}  Removing TASKS.md...${colors.reset}`);
+  rmSync(tasksPath);
+
+  console.log();
+  console.log(
+    `${colors.green}${colors.bold}Migration successful!${colors.reset}`
+  );
+  console.log(
+    `${colors.dim}Use 'dex list --ready' to see available tasks.${colors.reset}`
+  );
+  console.log();
+}
+
+/**
+ * Archive .math/todo/ and start fresh with dex
+ */
+async function executeArchiveMigration(colors: Record<string, string>): Promise<void> {
+  const todoDir = getTodoDir();
+  const backupsDir = getBackupsDir();
+
+  console.log();
+  console.log(`${colors.cyan}Archiving and starting fresh...${colors.reset}`);
+
+  // Step 1: Create timestamped backup directory
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const backupName = `${timestamp}-pre-dex`;
+  const backupPath = join(backupsDir, backupName);
+
+  console.log(`${colors.dim}  Creating backup at ${backupName}...${colors.reset}`);
+
+  // Ensure backups directory exists
+  if (!existsSync(backupsDir)) {
+    mkdirSync(backupsDir, { recursive: true });
+  }
+
+  // Step 2: Move entire .math/todo/ to backup
+  renameSync(todoDir, backupPath);
+
+  // Step 3: Initialize dex
+  console.log(`${colors.dim}  Initializing dex...${colors.reset}`);
+  const initResult = await $`dex init -y`.quiet();
+  if (initResult.exitCode !== 0) {
+    console.log(
+      `${colors.red}Failed to initialize dex: ${initResult.stderr.toString()}${colors.reset}`
+    );
+    // Try to restore backup
+    renameSync(backupPath, todoDir);
+    process.exit(1);
+  }
+
+  // Step 4: Create fresh .math/todo/ with PROMPT.md and LEARNINGS.md
+  console.log(`${colors.dim}  Creating fresh .math/todo/...${colors.reset}`);
+  mkdirSync(todoDir, { recursive: true });
+
+  await Bun.write(join(todoDir, "PROMPT.md"), PROMPT_TEMPLATE);
+  await Bun.write(join(todoDir, "LEARNINGS.md"), LEARNINGS_TEMPLATE);
+
+  console.log();
+  console.log(
+    `${colors.green}${colors.bold}Archive complete!${colors.reset}`
+  );
+  console.log(
+    `${colors.dim}Previous tasks backed up to: .math/backups/${backupName}${colors.reset}`
+  );
+  console.log(
+    `${colors.dim}Use 'dex add "task description"' to add new tasks.${colors.reset}`
+  );
+  console.log();
+}
+
+/**
+ * Print downgrade instructions and exit
+ */
+function executeExitWithDowngrade(colors: Record<string, string>): void {
+  console.log();
+  console.log(
+    `${colors.yellow}${colors.bold}Dex is required for this version of math.${colors.reset}`
+  );
+  console.log();
+  console.log(
+    `${colors.dim}If you prefer the old TASKS.md workflow, downgrade to version 0.4.0:${colors.reset}`
+  );
+  console.log();
+  console.log(
+    `  ${colors.cyan}bun remove @cephalization/math && bun add @cephalization/math@0.4.0${colors.reset}`
+  );
+  console.log();
+  process.exit(0);
+}
+
+/**
+ * Main orchestration function: check if migration is needed, prompt user, and execute.
+ * Returns the migration choice (or undefined if no migration was needed).
+ */
+export async function migrateTasksToDexIfNeeded(): Promise<MigrationChoice | undefined> {
+  const needsMigration = await checkNeedsDexMigration();
+
+  if (!needsMigration) {
+    return undefined;
+  }
+
+  const choice = await promptDexMigration();
+  await executeDexMigration(choice);
+
+  return choice;
 }
