@@ -47,5 +47,5 @@ Update all dex CLI install instructions to point to https://dex.rip/
 ### verify-no-remaining-incorrect-refs
 
 - content: Search the entire codebase for any remaining references to `cargo install dex-cli`, `cortesi/dex`, or other incorrect dex installation instructions. Ensure all dex references now point to `https://dex.rip/`. Run `bun test` to ensure no tests broke.
-- status: pending
+- status: complete
 - dependencies: fix-loop-dex-reference, fix-init-dex-reference, fix-iterate-dex-reference
