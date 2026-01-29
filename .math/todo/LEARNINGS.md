@@ -152,6 +152,15 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - All 22 tests pass independently; pre-existing 13 failures in loop.test.ts and init.test.ts are separate tasks (`update-loop-tests`, `update-init-tests`)
 - Pattern: when mocking shell commands isn't practical, test the JSON parsing and error handling logic by simulating command outcomes
 
+## update-init-tests
+
+- Used `mock.module("../dex", ...)` to mock `isDexAvailable()` and `getDexDir()` functions from dex module
+- Created `createMockShell()` helper function that returns a mock `Bun.$` to intercept `dex init` calls
+- The mock shell returns a no-op result for all commands rather than calling the real shell - avoids actual shell execution during tests
+- Key tests: (1) PROMPT.md/LEARNINGS.md created but not TASKS.md, (2) dex init called when no .dex exists, (3) dex init NOT called when .dex exists, (4) dex init NOT called when dex unavailable
+- Module-level variables (`mockDexAvailable`, `mockDexDirPath`, `dexInitCalled`) track mock state and are reset in `beforeEach()`
+- Cast the mock shell function using `as unknown as typeof Bun.$` to satisfy TypeScript since we're not fully implementing the shell interface
+
 ## remove-tasks-module
 
 - Deleted `src/tasks.ts` since dex now handles all task management
