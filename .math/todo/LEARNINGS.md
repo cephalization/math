@@ -105,3 +105,15 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated "Next steps" to show `dex add "Your first task"` instead of editing TASKS.md
 - 2 init.test.ts failures are expected - they check for TASKS.md which we no longer create
 - Init test updates are deferred to separate `update-init-tests` task per task dependency graph
+
+## update-iterate-for-dex
+
+- Added `dexArchiveCompleted()` function to `src/dex.ts` that wraps `dex archive --completed` and returns archive count
+- Iterate command now archives completed dex tasks instead of backing up TASKS.md to `.math/backups/`
+- LEARNINGS.md is still backed up to `.math/backups/` with a timestamped filename (e.g., `LEARNINGS-2026-01-29T14-49-27-000Z.md`)
+- Removed dependency on `generatePlanSummary` and `TASKS_TEMPLATE` since we no longer use TASKS.md
+- Changed backup flow: instead of copying entire `.math/todo/` to a summary-named backup dir, we archive dex tasks and backup only LEARNINGS.md
+- Updated "Next steps" message to show `dex add` instead of editing TASKS.md
+- Added `isDexAvailable()` check at start of iterate to fail fast with helpful error message
+- The archive output parsing uses regex to extract count from "Archived N task(s)" format - returns 0 if no match
+- No iterate.test.ts exists, so no test updates needed for this task

@@ -85,7 +85,7 @@ Replace markdown-based task management with dex CLI.
 ### update-iterate-for-dex
 
 - content: Modify `src/commands/iterate.ts` for dex workflow. Backup should archive completed dex tasks using `dex archive` for top-level completed tasks. Reset LEARNINGS.md as before. Since dex manages tasks persistently, "iterate" becomes about archiving completed work and resetting learnings rather than wiping TASKS.md.
-- status: pending
+- status: complete
 - dependencies: update-init-for-dex
 
 ## Phase 4: Agent Prompt Updates

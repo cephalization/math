@@ -141,3 +141,31 @@ export async function dexComplete(id: string, result: string): Promise<void> {
     );
   }
 }
+
+/**
+ * Result from dex archive --completed --dry-run
+ */
+export interface DexArchiveResult {
+  archivedCount: number;
+  output: string;
+}
+
+/**
+ * Archive all completed top-level tasks via dex archive --completed
+ * Returns the number of tasks archived and output
+ */
+export async function dexArchiveCompleted(): Promise<DexArchiveResult> {
+  const result = await $`dex archive --completed`.quiet();
+  if (result.exitCode !== 0) {
+    throw new Error(`dex archive --completed failed: ${result.stderr.toString()}`);
+  }
+  
+  const output = result.text().trim();
+  
+  // Parse the output to get the count of archived tasks
+  // Expected format: "Archived N task(s)"
+  const match = output.match(/Archived\s+(\d+)\s+task/i);
+  const archivedCount = match && match[1] ? parseInt(match[1], 10) : 0;
+  
+  return { archivedCount, output };
+}
