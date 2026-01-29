@@ -171,8 +171,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   if (!(await isDexAvailable())) {
     throw new Error(
       "dex not found in PATH.\n" +
-        "Install: cargo install dex-cli\n" +
-        "See: https://github.com/cortesi/dex"
+        "Install from: https://dex.rip/"
     );
   }
 
