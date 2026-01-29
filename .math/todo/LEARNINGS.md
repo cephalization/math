@@ -64,3 +64,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Exported `MigrationChoice` as enum with values `Port`, `Archive`, `Exit` for type-safe choice handling
 - Keep colors object local to module for console output styling - pattern used across other commands
 - The 11 loop.test.ts failures are expected and documented in learnings - they depend on TASKS.md workflow and will be fixed in update-loop-tests task
+
+## add-dex-migration-execution
+
+- `executeDexMigration()` dispatches to three helper functions based on MigrationChoice: `executePortMigration`, `executeArchiveMigration`, `executeExitWithDowngrade`
+- Port migration: init dex → parse TASKS.md → import each task via `importTaskToDex()` → remove TASKS.md on success
+- Archive migration: create timestamped backup with `-pre-dex` suffix → move entire `.math/todo/` → init dex → recreate `.math/todo/` with fresh PROMPT.md and LEARNINGS.md from templates
+- Archive has rollback: if `dex init -y` fails after moving todo dir, it restores the backup directory
+- Used `rmSync` for deleting TASKS.md and `renameSync` for moving directories (synchronous is fine for single operations)
+- `migrateTasksToDexIfNeeded()` is the main orchestration function - returns `MigrationChoice | undefined` to indicate what action was taken
+- Exit handler uses `process.exit(0)` after printing downgrade instructions - clean exit, not an error
+- Timestamp format uses ISO format with colons/periods replaced by dashes for filesystem compatibility (e.g., `2026-01-29T14-14-58-pre-dex`)

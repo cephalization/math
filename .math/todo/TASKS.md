@@ -59,7 +59,7 @@ Replace markdown-based task management with dex CLI.
 ### add-dex-migration-execution
 
 - content: In `src/migrate-to-dex.ts`, implement `executeDexMigration(choice)` that performs the chosen migration action. For "port": call `dex init -y`, read TASKS.md via `parseTasks()`, import each task via `importTaskToDex()`, delete TASKS.md on success. For "archive": create timestamped backup dir, move entire `.math/todo/` there, run `dex init -y`, create fresh PROMPT.md and LEARNINGS.md. For "exit": print clear message with downgrade instructions (`bun remove @cephalization/math && bun add @cephalization/math@0.4.0`) and call `process.exit(0)`. Export a single `migrateTasksToDexIfNeeded()` function that orchestrates check -> prompt -> execute.
-- status: pending
+- status: complete
 - dependencies: add-dex-migration-prompt
 
 ### integrate-dex-migration-check
