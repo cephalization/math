@@ -205,3 +205,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Changed from `Install with: cargo install dex-cli` to `Install from: https://dex.rip/`
 - Verified the test output shows the new URL correctly
 - All 152 tests pass - string-only change with no behavioral impact
+
+## fix-iterate-dex-reference
+
+- Updated `src/commands/iterate.ts` line 37 error message for missing dex CLI
+- Changed from `Install it with: cargo install dex-cli` to `Install from https://dex.rip/`
+- All 152 tests pass - string-only change with no behavioral impact
+- This completes Phase 1 of the dex installation reference fixes - next task is Phase 2 verification

@@ -34,7 +34,7 @@ export async function iterate(
   const dexAvailable = await isDexAvailable();
   if (!dexAvailable) {
     throw new Error(
-      "dex CLI not found. Install it with: cargo install dex-cli"
+      "dex CLI not found. Install from https://dex.rip/"
     );
   }
 
