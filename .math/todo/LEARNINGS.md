@@ -151,3 +151,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Edge case tests cover: all optional fields populated, nested children in subtasks, malformed JSON handling
 - All 22 tests pass independently; pre-existing 13 failures in loop.test.ts and init.test.ts are separate tasks (`update-loop-tests`, `update-init-tests`)
 - Pattern: when mocking shell commands isn't practical, test the JSON parsing and error handling logic by simulating command outcomes
+
+## remove-tasks-module
+
+- Deleted `src/tasks.ts` since dex now handles all task management
+- Moved `Task` interface and `parseTasks()` function to `src/migrate-tasks.ts` to preserve migration functionality
+- Updated imports in `src/migrate-to-dex.ts` and `src/migrate-to-dex.test.ts` to use `src/migrate-tasks.ts` instead of `src/tasks.ts`
+- Added `parseTasksForMigration()` as an alias for `parseTasks()` for backwards compatibility in test files
+- The 13 pre-existing test failures in `loop.test.ts` and `init.test.ts` are NOT caused by this task - they were already failing due to dex integration changes
+- Those test failures will be fixed by separate pending tasks: `update-loop-tests` and `update-init-tests`
+- Migration tests (19 tests) all pass after the changes, confirming the parsing logic works correctly in its new location

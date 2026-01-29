@@ -7,8 +7,7 @@ import {
   checkNeedsDexMigration,
   MigrationChoice,
 } from "./migrate-to-dex";
-import { parseTasksForMigration, type ImportResult } from "./migrate-tasks";
-import type { Task } from "./tasks";
+import { parseTasksForMigration, type ImportResult, type Task } from "./migrate-tasks";
 
 describe("checkNeedsDexMigration", () => {
   let testDir: string;

@@ -4,8 +4,7 @@ import { join } from "node:path";
 import { $ } from "bun";
 import { getTodoDir, getBackupsDir } from "./paths";
 import { getDexDir } from "./dex";
-import { parseTasks } from "./tasks";
-import { importTaskToDex, type MigrationReport } from "./migrate-tasks";
+import { parseTasks, importTaskToDex, type MigrationReport } from "./migrate-tasks";
 import { PROMPT_TEMPLATE, LEARNINGS_TEMPLATE } from "./templates";
 
 /**
