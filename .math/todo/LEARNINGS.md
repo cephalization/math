@@ -181,3 +181,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Added new "runLoop dex integration" test suite with 6 tests covering: dex availability check, dex status errors, no tasks error, in_progress warning, completion success, and task details in prompt
 - The `mock.module()` call affects the module immediately for ESM imports, so re-importing with `await import("./loop")` in each test ensures the mocks are used
 - Pre-existing init.test.ts failures (2 tests) remain - they're for `update-init-tests` task which is next in the queue
+
+## update-help-text
+
+- Updated help text in `index.ts` to reflect dex integration
+- Changed tagline from "Multi-Agent Todo Harness" to "Multi-Agent Task Harness" (more generic, doesn't imply TODO list)
+- Updated description from "tasks from a TODO list" to "tasks managed by dex"
+- Updated command descriptions: `init` now "Initialize dex", `status` now "Show current task counts from dex", `iterate` now "Archive completed tasks"
+- Added new "TASK MANAGEMENT" section with common dex commands users may need: `dex list --ready`, `dex status`, `dex show <id>`, `dex add`
+- Updated examples comment for iterate: "Start a new sprint (archive completed, reset learnings, plan)" instead of "backup current, reset, plan"
+- Documentation-only change - no new tests needed, existing 152 tests continue to pass
