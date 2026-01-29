@@ -119,13 +119,13 @@ Replace markdown-based task management with dex CLI.
 ### update-loop-tests
 
 - content: Update `src/loop.test.ts` to work with the new dex-based loop. Mock the dex module functions instead of TASKS.md file operations. Ensure existing test patterns for agent invocation and error handling still work.
-- status: pending
+- status: complete
 - dependencies: update-loop-for-dex, add-dex-tests
 
 ### update-init-tests
 
 - content: Update `src/commands/init.test.ts` for dex initialization. Test that `dex init -y` is called when no `.dex/` exists. Test that existing `.dex/` is reused. Test that PROMPT.md and LEARNINGS.md are still created but TASKS.md is not.
-- status: pending
+- status: complete
 - dependencies: update-init-for-dex, add-dex-tests
 
 ## Phase 6: Documentation
@@ -133,5 +133,5 @@ Replace markdown-based task management with dex CLI.
 ### update-help-text
 
 - content: Update `index.ts` help text to reflect dex integration. Mention that math uses dex for task management. Update example commands if needed. Ensure --help output is accurate for the new workflow.
-- status: pending
+- status: complete
 - dependencies: update-init-for-dex, update-status-command
