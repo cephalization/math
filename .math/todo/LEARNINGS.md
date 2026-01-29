@@ -26,3 +26,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Used Bun's `$` shell template tag with `.quiet()` to suppress output and check `exitCode` for error handling
 - The module doesn't need tests in this task - there's a separate `add-dex-tests` task for that
 - Dex stores tasks in `.dex/tasks.jsonl` at git root or pwd, found via `dex dir`
+
+## update-loop-for-dex
+
+- Replaced `readTasks`, `countTasks`, `updateTaskStatus`, `writeTasks` imports with dex functions: `isDexAvailable`, `dexStatus`, `dexListReady`, `dexShow`
+- DexStatus.stats uses different field names than TaskCounts: `completed` vs `complete`, `inProgress` vs `in_progress`
+- Added `isDexAvailable()` check early in loop to fail fast with helpful install instructions
+- The agent prompt now includes next task context from `dexShow()` when available (id, name, description, blockedBy)
+- Removed TASKS.md file existence check since dex manages tasks, kept PROMPT.md check
+- Existing loop.test.ts tests will fail because they rely on TASKS.md file format - these tests will be updated in `update-loop-tests` task
+- Non-loop tests (84 tests) continue to pass, loop tests (11 tests) are expected to fail until mocked
+- The loop still references TASKS.md in the prompt and files array - this will be updated when PROMPT.md template is updated
