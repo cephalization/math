@@ -113,7 +113,7 @@ Replace markdown-based task management with dex CLI.
 ### add-dex-tests
 
 - content: Create `src/dex.test.ts` with unit tests for the dex module. Mock the Bun.$ shell calls to test JSON parsing and error handling. Test `isDexAvailable()`, `dexStatus()`, `dexListReady()`, `dexShow()`, `dexStart()`, and `dexComplete()` with sample JSON responses.
-- status: pending
+- status: complete
 - dependencies: add-dex-module
 
 ### update-loop-tests
