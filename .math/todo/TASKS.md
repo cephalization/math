@@ -79,7 +79,7 @@ Replace markdown-based task management with dex CLI.
 ### update-init-for-dex
 
 - content: Modify `src/commands/init.ts` to initialize dex instead of creating TASKS.md. Find git root (or use pwd if no .git). If `.dex/` already exists, reuse it and skip dex init. Otherwise run `dex init -y` to create dex config. Still create `.math/todo/` with PROMPT.md and LEARNINGS.md only (no TASKS.md). Update success messages to reference dex commands.
-- status: pending
+- status: complete
 - dependencies: add-dex-module
 
 ### update-iterate-for-dex

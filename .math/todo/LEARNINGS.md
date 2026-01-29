@@ -94,3 +94,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Added tests for error cases: failure on add, failure on block (dependency not found)
 - Existing tests for `checkNeedsDexMigration()`, `parseTasksForMigration()`, and archive backup structure already had good coverage
 - Pre-existing 11 loop.test.ts failures are unrelated - they're from dex integration in loop.ts and will be fixed in `update-loop-tests` task
+
+## update-init-for-dex
+
+- Removed `TASKS_TEMPLATE` import since dex manages tasks, only create PROMPT.md and LEARNINGS.md
+- Used `isDexAvailable()` to check if dex CLI is installed before attempting initialization
+- Used `getDexDir()` to check if `.dex/` already exists and reuse it (returns path or null)
+- Run `dex init -y` only when dex is available AND no existing .dex directory found
+- Added helpful warning message when dex CLI is not found, with install instructions
+- Updated "Next steps" to show `dex add "Your first task"` instead of editing TASKS.md
+- 2 init.test.ts failures are expected - they check for TASKS.md which we no longer create
+- Init test updates are deferred to separate `update-init-tests` task per task dependency graph
