@@ -27,7 +27,7 @@ Replace markdown-based task management with dex CLI.
 ### add-dex-module
 
 - content: Create `src/dex.ts` module that wraps dex CLI commands. Implement functions: `isDexAvailable()` to check if dex is installed, `getDexDir()` to find .dex directory (git root or pwd), `dexStatus()` to get task counts via `dex status --json`, `dexListReady()` to get ready tasks via `dex list --ready --json`, `dexShow(id)` to get task details via `dex show <id> --json`, `dexStart(id)` to mark task in-progress, and `dexComplete(id, result)` to complete with result. All functions should parse JSON output and return typed interfaces.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### update-loop-for-dex
