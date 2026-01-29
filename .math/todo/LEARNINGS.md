@@ -161,3 +161,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The 13 pre-existing test failures in `loop.test.ts` and `init.test.ts` are NOT caused by this task - they were already failing due to dex integration changes
 - Those test failures will be fixed by separate pending tasks: `update-loop-tests` and `update-init-tests`
 - Migration tests (19 tests) all pass after the changes, confirming the parsing logic works correctly in its new location
+
+## update-loop-tests
+
+- Bun's `mock.module()` is the proper way to mock ES module imports - direct property assignment fails with "readonly property" error
+- Mock functions must be declared at module level and then re-assigned in `beforeEach()` to reset state between tests
+- When a mock function needs arguments, use `mock((_param: Type) => ...)` syntax to satisfy TypeScript
+- Created helper functions `createMockDexStatus()`, `createMockDexTask()`, `createMockDexTaskDetails()` to easily construct mock data with overrides
+- Tests no longer create TASKS.md files - they mock `dexStatus()`, `dexListReady()`, and `dexShow()` instead
+- Added new "runLoop dex integration" test suite with 6 tests covering: dex availability check, dex status errors, no tasks error, in_progress warning, completion success, and task details in prompt
+- The `mock.module()` call affects the module immediately for ESM imports, so re-importing with `await import("./loop")` in each test ensures the mocks are used
+- Pre-existing init.test.ts failures (2 tests) remain - they're for `update-init-tests` task which is next in the queue

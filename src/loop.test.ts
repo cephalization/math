@@ -1,23 +1,107 @@
-import { test, expect, describe, beforeEach, afterEach } from "bun:test";
+import { test, expect, describe, beforeEach, afterEach, mock } from "bun:test";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runLoop } from "./loop";
 import { createMockAgent } from "./agent";
 import { createOutputBuffer } from "./ui/buffer";
 import { DEFAULT_PORT } from "./ui/server";
+import type { DexStatus, DexTask, DexTaskDetails } from "./dex";
+
+/**
+ * Helper to create a mock DexStatus object
+ */
+function createMockDexStatus(overrides: Partial<DexStatus["stats"]> = {}): DexStatus {
+  return {
+    stats: {
+      total: 1,
+      pending: 0,
+      completed: 1,
+      blocked: 0,
+      ready: 0,
+      inProgress: 0,
+      ...overrides,
+    },
+    inProgressTasks: [],
+    readyTasks: [],
+    blockedTasks: [],
+    recentlyCompleted: [],
+  };
+}
+
+/**
+ * Helper to create a mock DexTask object
+ */
+function createMockDexTask(overrides: Partial<DexTask> = {}): DexTask {
+  return {
+    id: "test-task",
+    parent_id: null,
+    name: "Test task",
+    description: null,
+    priority: 1,
+    completed: false,
+    result: null,
+    metadata: null,
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+    started_at: null,
+    completed_at: null,
+    blockedBy: [],
+    blocks: [],
+    children: [],
+    ...overrides,
+  };
+}
+
+/**
+ * Helper to create a mock DexTaskDetails object
+ */
+function createMockDexTaskDetails(overrides: Partial<DexTaskDetails> = {}): DexTaskDetails {
+  return {
+    ...createMockDexTask(),
+    ancestors: [],
+    depth: 0,
+    subtasks: {
+      pending: 0,
+      completed: 0,
+      children: [],
+    },
+    grandchildren: null,
+    isBlocked: false,
+    ...overrides,
+  };
+}
+
+// Mock functions - declared at module level
+let mockIsDexAvailable = mock(() => Promise.resolve(true));
+let mockDexStatus = mock(() => Promise.resolve(createMockDexStatus()));
+let mockDexListReady = mock(() => Promise.resolve([] as DexTask[]));
+let mockDexShow = mock((_id: string) => Promise.resolve(createMockDexTaskDetails()));
+
+// Mock the dex module before tests run
+mock.module("./dex", () => ({
+  isDexAvailable: () => mockIsDexAvailable(),
+  dexStatus: () => mockDexStatus(),
+  dexListReady: () => mockDexListReady(),
+  dexShow: (id: string) => mockDexShow(id),
+}));
 
 describe("runLoop dry-run mode", () => {
   let testDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
+    // Reset mocks to default behavior
+    mockIsDexAvailable = mock(() => Promise.resolve(true));
+    mockDexStatus = mock(() => Promise.resolve(createMockDexStatus()));
+    mockDexListReady = mock(() => Promise.resolve([] as DexTask[]));
+    mockDexShow = mock((_id: string) => Promise.resolve(createMockDexTaskDetails()));
+
     // Create a temp directory for each test
     testDir = await mkdtemp(join(tmpdir(), "math-loop-test-"));
     originalCwd = process.cwd();
     process.chdir(testDir);
 
-    // Create the .math/todo directory with required files (new structure)
+    // Create the .math/todo directory with required files
     const todoDir = join(testDir, ".math", "todo");
     await mkdir(todoDir, { recursive: true });
 
@@ -27,17 +111,8 @@ describe("runLoop dry-run mode", () => {
       "# Test Prompt\n\nTest instructions."
     );
 
-    // Create TASKS.md with all tasks complete (so the loop exits after one iteration)
-    await writeFile(
-      join(todoDir, "TASKS.md"),
-      `# Tasks
-
-### test-task
-- content: Test task
-- status: complete
-- dependencies: none
-`
-    );
+    // Create .dex directory (required by loop)
+    await mkdir(join(testDir, ".dex"), { recursive: true });
   });
 
   afterEach(async () => {
@@ -49,16 +124,18 @@ describe("runLoop dry-run mode", () => {
   });
 
   test("dry-run mode uses custom mock agent", async () => {
-    // Use a pending task so the agent gets invoked
-    await writeFile(
-      join(testDir, ".math", "todo", "TASKS.md"),
-      `# Tasks
+    // Import runLoop after mocks are set up
+    const { runLoop } = await import("./loop");
 
-### test-task
-- content: Test task
-- status: pending
-- dependencies: none
-`
+    // Configure dex mocks for pending task
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ pending: 1, completed: 0, ready: 1 }))
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask({ id: "test-task", name: "Test task" })])
+    );
+    mockDexShow = mock(() =>
+      Promise.resolve(createMockDexTaskDetails({ id: "test-task", name: "Test task" }))
     );
 
     const mockAgent = createMockAgent({
@@ -111,16 +188,14 @@ describe("runLoop dry-run mode", () => {
   });
 
   test("dry-run mode with pending tasks runs iteration", async () => {
-    // Update TASKS.md to have a pending task
-    await writeFile(
-      join(testDir, ".math", "todo", "TASKS.md"),
-      `# Tasks
+    const { runLoop } = await import("./loop");
 
-### test-task
-- content: Test task
-- status: pending
-- dependencies: none
-`
+    // Configure dex mocks for pending task
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ pending: 1, completed: 0, ready: 1 }))
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask()])
     );
 
     const logs: string[] = [];
@@ -149,6 +224,13 @@ describe("runLoop dry-run mode", () => {
   });
 
   test("agent option allows injecting custom agent", async () => {
+    const { runLoop } = await import("./loop");
+
+    // Configure dex mocks for all tasks complete
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ total: 1, completed: 1, pending: 0 }))
+    );
+
     const callCount = { value: 0 };
     const mockAgent = createMockAgent({
       logs: [{ category: "info", message: "Injected agent running" }],
@@ -171,21 +253,18 @@ describe("runLoop dry-run mode", () => {
     });
 
     // Agent should not be called since all tasks are complete
-    // (the task file has a complete task)
     expect(callCount.value).toBe(0);
   });
 
   test("agent option with pending task invokes agent", async () => {
-    // Update TASKS.md to have a pending task
-    await writeFile(
-      join(testDir, ".math", "todo", "TASKS.md"),
-      `# Tasks
+    const { runLoop } = await import("./loop");
 
-### test-task
-- content: Test task
-- status: pending
-- dependencies: none
-`
+    // Configure dex mocks for pending task
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ pending: 1, completed: 0, ready: 1 }))
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask()])
     );
 
     const callCount = { value: 0 };
@@ -222,12 +301,20 @@ describe("runLoop stream-capture with buffer", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    // Reset mocks to default behavior - all tasks complete
+    mockIsDexAvailable = mock(() => Promise.resolve(true));
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ total: 1, completed: 1, pending: 0 }))
+    );
+    mockDexListReady = mock(() => Promise.resolve([] as DexTask[]));
+    mockDexShow = mock((_id: string) => Promise.resolve(createMockDexTaskDetails()));
+
     // Create a temp directory for each test
     testDir = await mkdtemp(join(tmpdir(), "math-loop-test-"));
     originalCwd = process.cwd();
     process.chdir(testDir);
 
-    // Create the .math/todo directory with required files (new structure)
+    // Create the .math/todo directory with required files
     const todoDir = join(testDir, ".math", "todo");
     await mkdir(todoDir, { recursive: true });
 
@@ -237,17 +324,8 @@ describe("runLoop stream-capture with buffer", () => {
       "# Test Prompt\n\nTest instructions."
     );
 
-    // Create TASKS.md with all tasks complete
-    await writeFile(
-      join(todoDir, "TASKS.md"),
-      `# Tasks
-
-### test-task
-- content: Test task
-- status: complete
-- dependencies: none
-`
-    );
+    // Create .dex directory
+    await mkdir(join(testDir, ".dex"), { recursive: true });
   });
 
   afterEach(async () => {
@@ -256,6 +334,7 @@ describe("runLoop stream-capture with buffer", () => {
   });
 
   test("loop logs are captured to buffer", async () => {
+    const { runLoop } = await import("./loop");
     const buffer = createOutputBuffer();
 
     // Suppress console output during test
@@ -288,6 +367,7 @@ describe("runLoop stream-capture with buffer", () => {
   });
 
   test("loop success logs are captured with correct category", async () => {
+    const { runLoop } = await import("./loop");
     const buffer = createOutputBuffer();
 
     const originalLog = console.log;
@@ -316,16 +396,14 @@ describe("runLoop stream-capture with buffer", () => {
   });
 
   test("agent output is captured to buffer", async () => {
-    // Use a pending task so the agent gets invoked
-    await writeFile(
-      join(testDir, ".math", "todo", "TASKS.md"),
-      `# Tasks
+    const { runLoop } = await import("./loop");
 
-### test-task
-- content: Test task
-- status: pending
-- dependencies: none
-`
+    // Configure dex mocks for pending task so agent runs
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ pending: 1, completed: 0, ready: 1 }))
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask()])
     );
 
     const buffer = createOutputBuffer();
@@ -364,6 +442,7 @@ describe("runLoop stream-capture with buffer", () => {
   });
 
   test("buffer subscribers receive logs in real-time", async () => {
+    const { runLoop } = await import("./loop");
     const buffer = createOutputBuffer();
     const receivedLogs: string[] = [];
 
@@ -395,15 +474,14 @@ describe("runLoop stream-capture with buffer", () => {
   });
 
   test("buffer subscribers receive agent output in real-time", async () => {
-    await writeFile(
-      join(testDir, ".math", "todo", "TASKS.md"),
-      `# Tasks
+    const { runLoop } = await import("./loop");
 
-### test-task
-- content: Test task
-- status: pending
-- dependencies: none
-`
+    // Configure dex mocks for pending task so agent runs
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ pending: 1, completed: 0, ready: 1 }))
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask()])
     );
 
     const buffer = createOutputBuffer();
@@ -445,6 +523,8 @@ describe("runLoop stream-capture with buffer", () => {
   });
 
   test("console.log still works without buffer", async () => {
+    const { runLoop } = await import("./loop");
+
     const logs: string[] = [];
     const originalLog = console.log;
     console.log = (...args: unknown[]) => {
@@ -474,12 +554,20 @@ describe("runLoop UI server integration", () => {
   let originalCwd: string;
 
   beforeEach(async () => {
+    // Reset mocks - all tasks complete
+    mockIsDexAvailable = mock(() => Promise.resolve(true));
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ total: 1, completed: 1, pending: 0 }))
+    );
+    mockDexListReady = mock(() => Promise.resolve([] as DexTask[]));
+    mockDexShow = mock((_id: string) => Promise.resolve(createMockDexTaskDetails()));
+
     // Create a temp directory for each test
     testDir = await mkdtemp(join(tmpdir(), "math-loop-ui-test-"));
     originalCwd = process.cwd();
     process.chdir(testDir);
 
-    // Create the .math/todo directory with required files (new structure)
+    // Create the .math/todo directory with required files
     const todoDir = join(testDir, ".math", "todo");
     await mkdir(todoDir, { recursive: true });
 
@@ -489,17 +577,8 @@ describe("runLoop UI server integration", () => {
       "# Test Prompt\n\nTest instructions."
     );
 
-    // Create TASKS.md with all tasks complete
-    await writeFile(
-      join(todoDir, "TASKS.md"),
-      `# Tasks
-
-### test-task
-- content: Test task
-- status: complete
-- dependencies: none
-`
-    );
+    // Create .dex directory
+    await mkdir(join(testDir, ".dex"), { recursive: true });
   });
 
   afterEach(async () => {
@@ -513,6 +592,8 @@ describe("runLoop UI server integration", () => {
   // Manual testing should verify UI server integration works correctly.
 
   test("ui: false disables the server", async () => {
+    const { runLoop } = await import("./loop");
+
     const logs: string[] = [];
     const originalLog = console.log;
     console.log = (...args: unknown[]) => {
@@ -533,5 +614,214 @@ describe("runLoop UI server integration", () => {
     } finally {
       console.log = originalLog;
     }
+  });
+});
+
+describe("runLoop dex integration", () => {
+  let testDir: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    // Reset mocks
+    mockIsDexAvailable = mock(() => Promise.resolve(true));
+    mockDexStatus = mock(() => Promise.resolve(createMockDexStatus()));
+    mockDexListReady = mock(() => Promise.resolve([] as DexTask[]));
+    mockDexShow = mock((_id: string) => Promise.resolve(createMockDexTaskDetails()));
+
+    testDir = await mkdtemp(join(tmpdir(), "math-loop-dex-test-"));
+    originalCwd = process.cwd();
+    process.chdir(testDir);
+
+    const todoDir = join(testDir, ".math", "todo");
+    await mkdir(todoDir, { recursive: true });
+    await writeFile(
+      join(todoDir, "PROMPT.md"),
+      "# Test Prompt\n\nTest instructions."
+    );
+    await mkdir(join(testDir, ".dex"), { recursive: true });
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await rm(testDir, { recursive: true, force: true });
+  });
+
+  test("throws error when dex is not available", async () => {
+    const { runLoop } = await import("./loop");
+    mockIsDexAvailable = mock(() => Promise.resolve(false));
+
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await expect(
+        runLoop({
+          dryRun: true,
+          maxIterations: 1,
+          pauseSeconds: 0,
+          ui: false,
+        })
+      ).rejects.toThrow("dex not found in PATH");
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("throws error when dexStatus fails", async () => {
+    const { runLoop } = await import("./loop");
+    mockDexStatus = mock(() =>
+      Promise.reject(new Error("dex not initialized"))
+    );
+
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await expect(
+        runLoop({
+          dryRun: true,
+          maxIterations: 1,
+          pauseSeconds: 0,
+          ui: false,
+        })
+      ).rejects.toThrow("Failed to get dex status");
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("throws error when no tasks exist in dex", async () => {
+    const { runLoop } = await import("./loop");
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ total: 0, completed: 0, pending: 0 }))
+    );
+
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await expect(
+        runLoop({
+          dryRun: true,
+          maxIterations: 1,
+          pauseSeconds: 0,
+          ui: false,
+        })
+      ).rejects.toThrow("No tasks found in dex");
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("logs warning when in_progress tasks exist", async () => {
+    const { runLoop } = await import("./loop");
+    mockDexStatus = mock(() =>
+      Promise.resolve(
+        createMockDexStatus({ total: 2, pending: 1, completed: 0, inProgress: 1, ready: 1 })
+      )
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask()])
+    );
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (...args: unknown[]) => {
+      logs.push(args.join(" "));
+    };
+
+    try {
+      await runLoop({
+        dryRun: true,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        ui: false,
+      });
+    } catch {
+      // Expected: max iterations exceeded
+    } finally {
+      console.log = originalLog;
+    }
+
+    const logText = logs.join("\n");
+    expect(logText).toContain("in_progress");
+  });
+
+  test("completes successfully when all tasks are done", async () => {
+    const { runLoop } = await import("./loop");
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ total: 3, completed: 3, pending: 0, inProgress: 0 }))
+    );
+
+    const logs: string[] = [];
+    const originalLog = console.log;
+    console.log = (...args: unknown[]) => {
+      logs.push(args.join(" "));
+    };
+
+    try {
+      await runLoop({
+        dryRun: true,
+        maxIterations: 10,
+        pauseSeconds: 0,
+        ui: false,
+      });
+
+      const logText = logs.join("\n");
+      expect(logText).toContain("All 3 tasks complete");
+    } finally {
+      console.log = originalLog;
+    }
+  });
+
+  test("includes task details in agent prompt when ready tasks exist", async () => {
+    const { runLoop } = await import("./loop");
+    const taskDetails = createMockDexTaskDetails({
+      id: "ready-task-123",
+      name: "Ready task name",
+      description: "Task description here",
+      blockedBy: ["dep-1", "dep-2"],
+    });
+
+    mockDexStatus = mock(() =>
+      Promise.resolve(createMockDexStatus({ pending: 1, ready: 1 }))
+    );
+    mockDexListReady = mock(() =>
+      Promise.resolve([createMockDexTask({ id: "ready-task-123" })])
+    );
+    mockDexShow = mock(() => Promise.resolve(taskDetails));
+
+    let capturedPrompt = "";
+    const mockAgent = createMockAgent({
+      exitCode: 0,
+    });
+    const originalRun = mockAgent.run.bind(mockAgent);
+    mockAgent.run = async (options) => {
+      capturedPrompt = options.prompt;
+      return originalRun(options);
+    };
+
+    const originalLog = console.log;
+    console.log = () => {};
+
+    try {
+      await runLoop({
+        dryRun: true,
+        agent: mockAgent,
+        maxIterations: 1,
+        pauseSeconds: 0,
+        ui: false,
+      });
+    } catch {
+      // Expected
+    } finally {
+      console.log = originalLog;
+    }
+
+    expect(capturedPrompt).toContain("ready-task-123");
+    expect(capturedPrompt).toContain("Ready task name");
+    expect(capturedPrompt).toContain("Task description here");
+    expect(capturedPrompt).toContain("dep-1");
+    expect(capturedPrompt).toContain("dep-2");
   });
 });
