@@ -212,3 +212,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Changed from `Install it with: cargo install dex-cli` to `Install from https://dex.rip/`
 - All 152 tests pass - string-only change with no behavioral impact
 - This completes Phase 1 of the dex installation reference fixes - next task is Phase 2 verification
+
+## verify-no-remaining-incorrect-refs
+
+- Searched codebase for `cargo install dex-cli`, `cortesi/dex`, and `github.com/cortesi` patterns
+- Only matches found were in `.math/todo/TASKS.md` (task descriptions) and `.math/todo/LEARNINGS.md` (historical notes) - no actual code references
+- Verified all 3 source files now correctly reference `https://dex.rip/`:
+  - `src/loop.ts:174` - "Install from: https://dex.rip/"
+  - `src/commands/init.ts:33` - "Install from: https://dex.rip/"
+  - `src/commands/iterate.ts:37` - "Install from https://dex.rip/"
+- All 152 tests pass - verification complete
+- This completes Phase 2 and the entire task tracker for fixing dex installation references
