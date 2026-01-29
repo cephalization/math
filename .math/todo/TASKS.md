@@ -33,7 +33,7 @@ Update all dex CLI install instructions to point to https://dex.rip/
 ### fix-init-dex-reference
 
 - content: Update `src/commands/init.ts` line 33 to replace `cargo install dex-cli` with instructions pointing to `https://dex.rip/` for dex installation.
-- status: pending
+- status: complete
 - dependencies: none
 
 ### fix-iterate-dex-reference
