@@ -33,7 +33,7 @@ Replace markdown-based task management with dex CLI.
 ### update-loop-for-dex
 
 - content: Modify `src/loop.ts` to use dex instead of TASKS.md parsing. Replace `readTasks()` calls with `dexStatus()` and `dexListReady()`. Update the agent invocation to include task context from `dexShow()` instead of reading TASKS.md. Remove the `readTasks`, `countTasks`, `updateTaskStatus`, `writeTasks` imports since dex manages task state. Keep the web UI buffer and logging infrastructure intact.
-- status: pending
+- status: complete
 - dependencies: add-dex-module
 
 ### update-status-command

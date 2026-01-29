@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { readTasks, countTasks, updateTaskStatus, writeTasks } from "./tasks";
 import { DEFAULT_MODEL } from "./constants";
 import { OpenCodeAgent, MockAgent, createLogEntry } from "./agent";
 import type { Agent, LogCategory } from "./agent";
@@ -7,6 +6,8 @@ import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
 import { startServer, DEFAULT_PORT } from "./ui/server";
 import { getTodoDir } from "./paths";
 import { migrateIfNeeded } from "./migration";
+import { isDexAvailable, dexStatus, dexListReady, dexShow } from "./dex";
+import type { DexStatus, DexTask, DexTaskDetails } from "./dex";
 
 const colors = {
   reset: "\x1b[0m",
@@ -158,7 +159,6 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
   const todoDir = getTodoDir();
   const promptPath = `${todoDir}/PROMPT.md`;
-  const tasksPath = `${todoDir}/TASKS.md`;
 
   // Check required files exist
   if (!existsSync(promptPath)) {
@@ -166,9 +166,13 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
       `PROMPT.md not found at ${promptPath}. Run 'math init' first.`
     );
   }
-  if (!existsSync(tasksPath)) {
+
+  // Verify dex is available
+  if (!(await isDexAvailable())) {
     throw new Error(
-      `TASKS.md not found at ${tasksPath}. Run 'math init' first.`
+      "dex not found in PATH.\n" +
+        "Install: cargo install dex-cli\n" +
+        "See: https://github.com/cortesi/dex"
     );
   }
 
@@ -234,41 +238,76 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
     log(`=== Iteration ${iteration} ===`);
 
-    // Read and count tasks
-    const { tasks, content } = await readTasks(todoDir);
-    const counts = countTasks(tasks);
+    // Get task status from dex
+    let status: DexStatus;
+    try {
+      status = await dexStatus();
+    } catch (error) {
+      logError(
+        `Failed to get dex status: ${error instanceof Error ? error.message : error}`
+      );
+      throw new Error("Failed to get dex status");
+    }
 
+    const { stats } = status;
     log(
-      `Tasks: ${counts.complete}/${counts.total} complete, ${counts.in_progress} in progress, ${counts.pending} pending`
+      `Tasks: ${stats.completed}/${stats.total} complete, ${stats.inProgress} in progress, ${stats.pending} pending`
     );
 
     // Check if all tasks are complete
-    if (counts.total > 0 && counts.pending === 0 && counts.in_progress === 0) {
-      logSuccess(`All ${counts.complete} tasks complete!`);
+    if (stats.total > 0 && stats.pending === 0 && stats.inProgress === 0) {
+      logSuccess(`All ${stats.completed} tasks complete!`);
       logSuccess(`Total iterations: ${iteration}`);
       return;
     }
 
     // Sanity check
-    if (counts.total === 0) {
-      logError("No tasks found in TASKS.md - check file format");
-      throw new Error("No tasks found in TASKS.md - check file format");
+    if (stats.total === 0) {
+      logError("No tasks found in dex - run 'dex add' to add tasks");
+      throw new Error("No tasks found in dex - run 'dex add' to add tasks");
     }
 
     // Check for stuck in_progress tasks
-    if (counts.in_progress > 0) {
+    if (stats.inProgress > 0) {
       logWarning(
-        `Found ${counts.in_progress} task(s) marked in_progress from previous run`
+        `Found ${stats.inProgress} task(s) marked in_progress from previous run`
       );
       logWarning("Agent will handle or reset these");
+    }
+
+    // Get next ready task for context
+    let readyTasks: DexTask[] = [];
+    let nextTaskDetails: DexTaskDetails | null = null;
+    try {
+      readyTasks = await dexListReady();
+      if (readyTasks.length > 0 && readyTasks[0]) {
+        nextTaskDetails = await dexShow(readyTasks[0].id);
+      }
+    } catch (error) {
+      logWarning(
+        `Failed to get ready tasks: ${error instanceof Error ? error.message : error}`
+      );
     }
 
     // Invoke agent
     log("Invoking agent...");
 
     try {
-      const prompt =
+      // Build prompt with dex context
+      let prompt =
         "Read the attached PROMPT.md and TASKS.md files. Follow the instructions in PROMPT.md to complete the next pending task.";
+
+      // Add next task context if available
+      if (nextTaskDetails) {
+        prompt += `\n\nNext ready task from dex:\n- ID: ${nextTaskDetails.id}\n- Name: ${nextTaskDetails.name}`;
+        if (nextTaskDetails.description) {
+          prompt += `\n- Description: ${nextTaskDetails.description}`;
+        }
+        if (nextTaskDetails.blockedBy.length > 0) {
+          prompt += `\n- Blocked by: ${nextTaskDetails.blockedBy.join(", ")}`;
+        }
+      }
+
       const files = [".math/todo/PROMPT.md", ".math/todo/TASKS.md"];
 
       const result = await agent.run({
@@ -306,15 +345,17 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
       } else {
         logError(`Agent exited with code ${result.exitCode}`);
 
-        // Check if any progress was made
-        const { tasks: newTasks } = await readTasks(todoDir);
-        const newCounts = countTasks(newTasks);
-
-        if (newCounts.complete > counts.complete) {
-          logWarning("Progress was made despite error, continuing...");
-        } else {
+        // Check if any progress was made by comparing dex status
+        try {
+          const newStatus = await dexStatus();
+          if (newStatus.stats.completed > stats.completed) {
+            logWarning("Progress was made despite error, continuing...");
+          } else {
+            logError("No progress made. Check logs and LEARNINGS.md");
+            // Continue anyway - next iteration might succeed
+          }
+        } catch {
           logError("No progress made. Check logs and LEARNINGS.md");
-          // Continue anyway - next iteration might succeed
         }
       }
     } catch (error) {
