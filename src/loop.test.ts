@@ -83,6 +83,14 @@ mock.module("./dex", () => ({
   dexStatus: () => mockDexStatus(),
   dexListReady: () => mockDexListReady(),
   dexShow: (id: string) => mockDexShow(id),
+  defaultDexClient: {
+    isAvailable: () => mockIsDexAvailable(),
+    status: () => mockDexStatus(),
+    listReady: () => mockDexListReady(),
+    show: (id: string) => mockDexShow(id),
+    start: () => {},
+    complete: () => {},
+  },
 }));
 
 describe("runLoop dry-run mode", () => {

@@ -60,6 +60,19 @@ export interface DexStatus {
 }
 
 /**
+ * DexClient interface for dependency injection
+ * Allows mocking dex in tests via DexMock
+ */
+export interface DexClient {
+  isAvailable(): Promise<boolean>;
+  status(): Promise<DexStatus>;
+  listReady(): Promise<DexTask[]>;
+  show(id: string): Promise<DexTaskDetails>;
+  start(id: string): Promise<void> | void;
+  complete(id: string, result: string): Promise<void> | void;
+}
+
+/**
  * Check if dex CLI is available in PATH
  */
 export async function isDexAvailable(): Promise<boolean> {
@@ -196,3 +209,15 @@ export async function dexArchiveCompleted(): Promise<DexArchiveResult> {
   
   return result;
 }
+
+/**
+ * Default dex client that calls the real dex CLI
+ */
+export const defaultDexClient: DexClient = {
+  isAvailable: isDexAvailable,
+  status: dexStatus,
+  listReady: dexListReady,
+  show: dexShow,
+  start: dexStart,
+  complete: dexComplete,
+};
