@@ -262,8 +262,8 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
     // Sanity check
     if (stats.total === 0) {
-      logError("No tasks found in dex - run 'dex add' to add tasks");
-      throw new Error("No tasks found in dex - run 'dex add' to add tasks");
+      logError("No tasks found in dex - run 'dex create' to add tasks");
+      throw new Error("No tasks found in dex - run 'dex create' to add tasks");
     }
 
     // Check for stuck in_progress tasks
@@ -294,7 +294,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     try {
       // Build prompt with dex context
       let prompt =
-        "Read the attached PROMPT.md and TASKS.md files. Follow the instructions in PROMPT.md to complete the next pending task.";
+        "Read the attached PROMPT.md file. Follow the instructions in PROMPT.md to complete the next pending task from dex.";
 
       // Add next task context if available
       if (nextTaskDetails) {
@@ -307,7 +307,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
         }
       }
 
-      const files = [".math/todo/PROMPT.md", ".math/todo/TASKS.md"];
+      const files = [".math/todo/PROMPT.md"];
 
       const result = await agent.run({
         model,

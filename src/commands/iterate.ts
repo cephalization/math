@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { LEARNINGS_TEMPLATE } from "../templates";
 import { runPlanningMode, askToRunPlanning } from "../plan";
 import { getTodoDir, getBackupsDir } from "../paths";
-import { migrateIfNeeded } from "../migration";
 import { isDexAvailable, dexStatus, dexArchiveCompleted } from "../dex";
 
 const colors = {
@@ -18,12 +17,6 @@ const colors = {
 export async function iterate(
   options: { skipPlan?: boolean; model?: string } = {}
 ) {
-  // Check for migration first
-  const migrated = await migrateIfNeeded();
-  if (!migrated) {
-    throw new Error("Migration required but was declined.");
-  }
-
   const todoDir = getTodoDir();
 
   if (!existsSync(todoDir)) {
@@ -50,10 +43,29 @@ export async function iterate(
   const completedCount = status.stats.completed;
   
   if (completedCount > 0) {
-    const archiveResult = await dexArchiveCompleted();
-    console.log(
-      `   ${colors.green}✓${colors.reset} Archived ${archiveResult.archivedCount} completed task(s)\n`
-    );
+    try {
+      const archiveResult = await dexArchiveCompleted();
+      if (archiveResult.archivedCount > 0) {
+        console.log(
+          `   ${colors.green}✓${colors.reset} Archived ${archiveResult.archivedCount} completed task(s)\n`
+        );
+      } else {
+        console.log(
+          `   ${colors.yellow}○${colors.reset} No top-level completed tasks to archive\n`
+        );
+      }
+      if (archiveResult.errors.length > 0) {
+        for (const err of archiveResult.errors) {
+          console.log(
+            `   ${colors.yellow}⚠${colors.reset} Could not archive ${err.id}: ${err.error}`
+          );
+        }
+      }
+    } catch (error) {
+      console.log(
+        `   ${colors.yellow}⚠${colors.reset} Archive failed: ${error instanceof Error ? error.message : error}\n`
+      );
+    }
   } else {
     console.log(
       `   ${colors.yellow}○${colors.reset} No completed tasks to archive\n`
@@ -106,7 +118,7 @@ export async function iterate(
   console.log();
   console.log(`${colors.bold}Next steps:${colors.reset}`);
   console.log(
-    `  1. Run ${colors.cyan}dex add "Your task description"${colors.reset} to add new tasks`
+    `  1. Run ${colors.cyan}dex create "Your task description"${colors.reset} to add new tasks`
   );
   console.log(
     `  2. Run ${colors.cyan}math run${colors.reset} to start the agent loop`

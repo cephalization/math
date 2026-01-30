@@ -54,7 +54,7 @@ ${colors.bold}TASK MANAGEMENT${colors.reset}
   ${colors.dim}dex list --ready${colors.reset}        Show tasks ready to work on
   ${colors.dim}dex status${colors.reset}              Show overall progress
   ${colors.dim}dex show <id>${colors.reset}           Get full task details
-  ${colors.dim}dex add "<content>"${colors.reset}     Add a new task
+  ${colors.dim}dex create "<name>"${colors.reset}     Create a new task
 
 ${colors.bold}EXAMPLES${colors.reset}
   ${colors.dim}# Initialize and plan a new project${colors.reset}

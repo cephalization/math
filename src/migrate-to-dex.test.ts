@@ -143,31 +143,41 @@ describe("parseTasksForMigration", () => {
 describe("importTaskToDex mocked tests", () => {
   // These tests verify the import logic by mocking Bun.$ shell calls
   // This allows testing without requiring dex to be installed
+  // Note: The actual implementation uses dex create and dex edit --add-blocker
+  // and dex generates its own IDs, but these mocks simulate the command flow
 
-  test("importTaskToDex calls dex add for pending task", async () => {
+  test("importTaskToDex calls dex create for pending task", async () => {
     // Track commands that would be executed
     const executedCommands: string[] = [];
+    // Simulated dex-generated ID
+    const generatedId = "abc123";
 
-    // Create a mock module with mocked $ function
+    // Create a mock module that simulates the expected behavior
     const mockModule = {
-      importTaskToDex: async (task: Task): Promise<ImportResult> => {
+      importTaskToDex: async (task: Task, idMap: Map<string, string> = new Map()): Promise<ImportResult> => {
         const result: ImportResult = { id: task.id, success: true };
 
-        // Simulate: dex add <content> --id <id>
-        executedCommands.push(`dex add "${task.content}" --id ${task.id}`);
+        // Simulate: dex create "<content>" --description "..."
+        executedCommands.push(`dex create "${task.content}" --description "Migrated from TASKS.md (original ID: ${task.id})"`);
+        
+        // Store the mapping (dex generates its own ID)
+        idMap.set(task.id, generatedId);
 
-        // Simulate: dex block <id> --by <dep> for each dependency
+        // Simulate: dex edit <id> --add-blocker <dep-id> for each dependency
         for (const depId of task.dependencies) {
-          executedCommands.push(`dex block ${task.id} --by ${depId}`);
+          const depDexId = idMap.get(depId);
+          if (depDexId) {
+            executedCommands.push(`dex edit ${generatedId} --add-blocker ${depDexId}`);
+          }
         }
 
         // Simulate status updates
         if (task.status === "complete") {
           executedCommands.push(
-            `dex complete ${task.id} --result "Migrated from TASKS.md"`
+            `dex complete ${generatedId} --result "Migrated from TASKS.md"`
           );
         } else if (task.status === "in_progress") {
-          executedCommands.push(`dex start ${task.id}`);
+          executedCommands.push(`dex start ${generatedId}`);
         }
 
         return result;
@@ -186,25 +196,30 @@ describe("importTaskToDex mocked tests", () => {
     expect(result.success).toBe(true);
     expect(result.id).toBe("test-pending");
     expect(executedCommands).toHaveLength(1);
-    expect(executedCommands[0]).toBe('dex add "A pending task" --id test-pending');
+    expect(executedCommands[0]).toBe('dex create "A pending task" --description "Migrated from TASKS.md (original ID: test-pending)"');
   });
 
   test("importTaskToDex calls dex complete for complete task", async () => {
     const executedCommands: string[] = [];
+    const generatedId = "abc123";
 
     const mockModule = {
-      importTaskToDex: async (task: Task): Promise<ImportResult> => {
+      importTaskToDex: async (task: Task, idMap: Map<string, string> = new Map()): Promise<ImportResult> => {
         const result: ImportResult = { id: task.id, success: true };
-        executedCommands.push(`dex add "${task.content}" --id ${task.id}`);
+        executedCommands.push(`dex create "${task.content}" --description "Migrated from TASKS.md (original ID: ${task.id})"`);
+        idMap.set(task.id, generatedId);
         for (const depId of task.dependencies) {
-          executedCommands.push(`dex block ${task.id} --by ${depId}`);
+          const depDexId = idMap.get(depId);
+          if (depDexId) {
+            executedCommands.push(`dex edit ${generatedId} --add-blocker ${depDexId}`);
+          }
         }
         if (task.status === "complete") {
           executedCommands.push(
-            `dex complete ${task.id} --result "Migrated from TASKS.md"`
+            `dex complete ${generatedId} --result "Migrated from TASKS.md"`
           );
         } else if (task.status === "in_progress") {
-          executedCommands.push(`dex start ${task.id}`);
+          executedCommands.push(`dex start ${generatedId}`);
         }
         return result;
       },
@@ -221,28 +236,33 @@ describe("importTaskToDex mocked tests", () => {
 
     expect(result.success).toBe(true);
     expect(executedCommands).toHaveLength(2);
-    expect(executedCommands[0]).toBe('dex add "A completed task" --id test-complete');
+    expect(executedCommands[0]).toBe('dex create "A completed task" --description "Migrated from TASKS.md (original ID: test-complete)"');
     expect(executedCommands[1]).toBe(
-      'dex complete test-complete --result "Migrated from TASKS.md"'
+      'dex complete abc123 --result "Migrated from TASKS.md"'
     );
   });
 
   test("importTaskToDex calls dex start for in_progress task", async () => {
     const executedCommands: string[] = [];
+    const generatedId = "abc123";
 
     const mockModule = {
-      importTaskToDex: async (task: Task): Promise<ImportResult> => {
+      importTaskToDex: async (task: Task, idMap: Map<string, string> = new Map()): Promise<ImportResult> => {
         const result: ImportResult = { id: task.id, success: true };
-        executedCommands.push(`dex add "${task.content}" --id ${task.id}`);
+        executedCommands.push(`dex create "${task.content}" --description "Migrated from TASKS.md (original ID: ${task.id})"`);
+        idMap.set(task.id, generatedId);
         for (const depId of task.dependencies) {
-          executedCommands.push(`dex block ${task.id} --by ${depId}`);
+          const depDexId = idMap.get(depId);
+          if (depDexId) {
+            executedCommands.push(`dex edit ${generatedId} --add-blocker ${depDexId}`);
+          }
         }
         if (task.status === "complete") {
           executedCommands.push(
-            `dex complete ${task.id} --result "Migrated from TASKS.md"`
+            `dex complete ${generatedId} --result "Migrated from TASKS.md"`
           );
         } else if (task.status === "in_progress") {
-          executedCommands.push(`dex start ${task.id}`);
+          executedCommands.push(`dex start ${generatedId}`);
         }
         return result;
       },
@@ -260,27 +280,35 @@ describe("importTaskToDex mocked tests", () => {
     expect(result.success).toBe(true);
     expect(executedCommands).toHaveLength(2);
     expect(executedCommands[0]).toBe(
-      'dex add "An in-progress task" --id test-in-progress'
+      'dex create "An in-progress task" --description "Migrated from TASKS.md (original ID: test-in-progress)"'
     );
-    expect(executedCommands[1]).toBe("dex start test-in-progress");
+    expect(executedCommands[1]).toBe("dex start abc123");
   });
 
-  test("importTaskToDex calls dex block for dependencies", async () => {
+  test("importTaskToDex calls dex edit --add-blocker for dependencies", async () => {
     const executedCommands: string[] = [];
+    // Pre-populate idMap with the dependency's generated ID
+    const idMap = new Map<string, string>();
+    idMap.set("dep-task", "dep123");
+    const generatedId = "abc123";
 
     const mockModule = {
-      importTaskToDex: async (task: Task): Promise<ImportResult> => {
+      importTaskToDex: async (task: Task, map: Map<string, string>): Promise<ImportResult> => {
         const result: ImportResult = { id: task.id, success: true };
-        executedCommands.push(`dex add "${task.content}" --id ${task.id}`);
+        executedCommands.push(`dex create "${task.content}" --description "Migrated from TASKS.md (original ID: ${task.id})"`);
+        map.set(task.id, generatedId);
         for (const depId of task.dependencies) {
-          executedCommands.push(`dex block ${task.id} --by ${depId}`);
+          const depDexId = map.get(depId);
+          if (depDexId) {
+            executedCommands.push(`dex edit ${generatedId} --add-blocker ${depDexId}`);
+          }
         }
         if (task.status === "complete") {
           executedCommands.push(
-            `dex complete ${task.id} --result "Migrated from TASKS.md"`
+            `dex complete ${generatedId} --result "Migrated from TASKS.md"`
           );
         } else if (task.status === "in_progress") {
-          executedCommands.push(`dex start ${task.id}`);
+          executedCommands.push(`dex start ${generatedId}`);
         }
         return result;
       },
@@ -293,32 +321,41 @@ describe("importTaskToDex mocked tests", () => {
       dependencies: ["dep-task"],
     };
 
-    const result = await mockModule.importTaskToDex(task);
+    const result = await mockModule.importTaskToDex(task, idMap);
 
     expect(result.success).toBe(true);
     expect(executedCommands).toHaveLength(2);
     expect(executedCommands[0]).toBe(
-      'dex add "Task with dependency" --id dependent-task'
+      'dex create "Task with dependency" --description "Migrated from TASKS.md (original ID: dependent-task)"'
     );
-    expect(executedCommands[1]).toBe("dex block dependent-task --by dep-task");
+    expect(executedCommands[1]).toBe("dex edit abc123 --add-blocker dep123");
   });
 
-  test("importTaskToDex calls dex block for each of multiple dependencies", async () => {
+  test("importTaskToDex calls dex edit --add-blocker for each of multiple dependencies", async () => {
     const executedCommands: string[] = [];
+    // Pre-populate idMap with dependencies' generated IDs
+    const idMap = new Map<string, string>();
+    idMap.set("dep-one", "dep1id");
+    idMap.set("dep-two", "dep2id");
+    const generatedId = "abc123";
 
     const mockModule = {
-      importTaskToDex: async (task: Task): Promise<ImportResult> => {
+      importTaskToDex: async (task: Task, map: Map<string, string>): Promise<ImportResult> => {
         const result: ImportResult = { id: task.id, success: true };
-        executedCommands.push(`dex add "${task.content}" --id ${task.id}`);
+        executedCommands.push(`dex create "${task.content}" --description "Migrated from TASKS.md (original ID: ${task.id})"`);
+        map.set(task.id, generatedId);
         for (const depId of task.dependencies) {
-          executedCommands.push(`dex block ${task.id} --by ${depId}`);
+          const depDexId = map.get(depId);
+          if (depDexId) {
+            executedCommands.push(`dex edit ${generatedId} --add-blocker ${depDexId}`);
+          }
         }
         if (task.status === "complete") {
           executedCommands.push(
-            `dex complete ${task.id} --result "Migrated from TASKS.md"`
+            `dex complete ${generatedId} --result "Migrated from TASKS.md"`
           );
         } else if (task.status === "in_progress") {
-          executedCommands.push(`dex start ${task.id}`);
+          executedCommands.push(`dex start ${generatedId}`);
         }
         return result;
       },
@@ -331,25 +368,25 @@ describe("importTaskToDex mocked tests", () => {
       dependencies: ["dep-one", "dep-two"],
     };
 
-    const result = await mockModule.importTaskToDex(task);
+    const result = await mockModule.importTaskToDex(task, idMap);
 
     expect(result.success).toBe(true);
     expect(executedCommands).toHaveLength(3);
     expect(executedCommands[0]).toBe(
-      'dex add "Task with multiple dependencies" --id multi-dep-task'
+      'dex create "Task with multiple dependencies" --description "Migrated from TASKS.md (original ID: multi-dep-task)"'
     );
-    expect(executedCommands[1]).toBe("dex block multi-dep-task --by dep-one");
-    expect(executedCommands[2]).toBe("dex block multi-dep-task --by dep-two");
+    expect(executedCommands[1]).toBe("dex edit abc123 --add-blocker dep1id");
+    expect(executedCommands[2]).toBe("dex edit abc123 --add-blocker dep2id");
   });
 
-  test("importTaskToDex returns error when add fails", async () => {
+  test("importTaskToDex returns error when create fails", async () => {
     const mockModule = {
       importTaskToDex: async (task: Task): Promise<ImportResult> => {
-        // Simulate failure on add
+        // Simulate failure on create
         return {
           id: task.id,
           success: false,
-          error: "Failed to add task: task already exists",
+          error: "Failed to create task: unknown error",
         };
       },
     };
@@ -364,19 +401,22 @@ describe("importTaskToDex mocked tests", () => {
     const result = await mockModule.importTaskToDex(task);
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("Failed to add task: task already exists");
+    expect(result.error).toBe("Failed to create task: unknown error");
   });
 
-  test("importTaskToDex returns error when block fails", async () => {
+  test("importTaskToDex returns error when dependency not found in idMap", async () => {
     const mockModule = {
-      importTaskToDex: async (task: Task): Promise<ImportResult> => {
-        // Simulate failure on block (dependency doesn't exist)
+      importTaskToDex: async (task: Task, idMap: Map<string, string> = new Map()): Promise<ImportResult> => {
+        // Simulate failure when dependency doesn't exist in idMap
         if (task.dependencies.length > 0) {
-          return {
-            id: task.id,
-            success: false,
-            error: `Failed to set dependency ${task.dependencies[0]}: task not found`,
-          };
+          const depId = task.dependencies[0];
+          if (!idMap.has(depId!)) {
+            return {
+              id: task.id,
+              success: false,
+              error: `Dependency ${depId} not found - ensure tasks are imported in dependency order`,
+            };
+          }
         }
         return { id: task.id, success: true };
       },
@@ -392,7 +432,7 @@ describe("importTaskToDex mocked tests", () => {
     const result = await mockModule.importTaskToDex(task);
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("Failed to set dependency nonexistent-task");
+    expect(result.error).toContain("Dependency nonexistent-task not found");
   });
 });
 

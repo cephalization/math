@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { $ } from "bun";
 import { getTodoDir, getBackupsDir } from "./paths";
 import { getDexDir } from "./dex";
-import { parseTasks, importTaskToDex, type MigrationReport } from "./migrate-tasks";
+import { parseTasks, importAllTasksToDex, type MigrationReport } from "./migrate-tasks";
 import { PROMPT_TEMPLATE, LEARNINGS_TEMPLATE } from "./templates";
 
 /**
@@ -186,25 +186,17 @@ async function executePortMigration(colors: Record<string, string>): Promise<voi
   if (tasks.length === 0) {
     console.log(`${colors.yellow}  No tasks found in TASKS.md${colors.reset}`);
   } else {
-    // Step 3: Import each task
+    // Step 3: Import all tasks (sorted by dependencies)
     console.log(`${colors.dim}  Importing ${tasks.length} tasks...${colors.reset}`);
-    const report: MigrationReport = {
-      total: tasks.length,
-      successful: 0,
-      failed: 0,
-      results: [],
-    };
+    const report = await importAllTasksToDex(content);
 
-    for (const task of tasks) {
-      const result = await importTaskToDex(task);
-      report.results.push(result);
+    // Show results
+    for (const result of report.results) {
       if (result.success) {
-        report.successful++;
-        console.log(`${colors.green}    ✓ ${task.id}${colors.reset}`);
+        console.log(`${colors.green}    ✓ ${result.id}${colors.reset}`);
       } else {
-        report.failed++;
         console.log(
-          `${colors.red}    ✗ ${task.id}: ${result.error}${colors.reset}`
+          `${colors.red}    ✗ ${result.id}: ${result.error}${colors.reset}`
         );
       }
     }
@@ -288,7 +280,7 @@ async function executeArchiveMigration(colors: Record<string, string>): Promise<
     `${colors.dim}Previous tasks backed up to: .math/backups/${backupName}${colors.reset}`
   );
   console.log(
-    `${colors.dim}Use 'dex add "task description"' to add new tasks.${colors.reset}`
+    `${colors.dim}Use 'dex create "task description"' to add new tasks.${colors.reset}`
   );
   console.log();
 }

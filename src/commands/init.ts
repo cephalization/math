@@ -77,7 +77,7 @@ export async function init(
   console.log();
   console.log(`Next steps:`);
   console.log(
-    `  1. Run ${colors.cyan}dex add "Your first task"${colors.reset} to add tasks`
+    `  1. Run ${colors.cyan}dex create "Your first task"${colors.reset} to add tasks`
   );
   console.log(
     `  2. Customize ${colors.cyan}.math/todo/PROMPT.md${colors.reset} for your project`
