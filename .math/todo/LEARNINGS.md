@@ -64,3 +64,14 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - The option is deliberately separate from `exitCode` because it simulates a specific failure mode: task starts but agent crashes before completing
 - Pattern: Early return from run() when simulating failure keeps the code path simple and explicit
 - This enables testing loop recovery scenarios where a task gets stuck in in_progress state
+
+## 4q8h8wsv
+
+- Refactored loop.test.ts to use DexMock instead of `mock.module('./dex', ...)`
+- Key change: Added `DexClient` interface to `dex.ts` enabling dependency injection via `LoopOptions.dexClient`
+- Design decision: Made DexMock methods async (returning Promises) to match the DexClient interface which wraps CLI calls
+- Gotcha: This required updating all code that uses DexMock (agent.ts, agent.test.ts, dex-mock.test.ts) to await the methods
+- Temp directories still needed for PROMPT.md and .dex directory checks - filesystem injection would be over-engineering
+- Pattern: `const dex = options.dexClient ?? defaultDexClient` provides clean default behavior while enabling testing
+- The `defaultDexClient` object wraps the existing standalone functions for backward compatibility
+- Tests now pass consistently (verified 5 runs) without relying on global mock state
