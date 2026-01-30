@@ -4,6 +4,8 @@
  * satisfied by either the real CLI or a mock for testing.
  */
 
+import type { DexMock } from "./testing/dex-mock";
+
 /**
  * Log entry categories for loop status messages.
  */
@@ -177,8 +179,25 @@ export class OpenCodeAgent implements Agent {
 }
 
 /**
+ * Configuration options for MockAgent.
+ */
+export interface MockAgentConfig {
+  available?: boolean;
+  logs?: Array<{ category: LogCategory; message: string }>;
+  output?: string[];
+  exitCode?: number;
+  delay?: number;
+  dexMock?: DexMock;
+  completeTask?: boolean;
+}
+
+/**
  * Mock agent for testing that doesn't call an LLM.
  * Emits configurable log messages and output events.
+ *
+ * When a DexMock is provided, the agent will simulate task completion:
+ * - Calls dexMock.start() for the first ready task
+ * - Calls dexMock.complete() if exitCode is 0
  */
 export class MockAgent implements Agent {
   private available: boolean;
@@ -186,16 +205,10 @@ export class MockAgent implements Agent {
   private mockOutput: string[];
   private mockExitCode: number;
   private mockDelay: number;
+  private dexMock: DexMock | undefined;
+  private completeTask: boolean;
 
-  constructor(
-    config: {
-      available?: boolean;
-      logs?: Array<{ category: LogCategory; message: string }>;
-      output?: string[];
-      exitCode?: number;
-      delay?: number;
-    } = {}
-  ) {
+  constructor(config: MockAgentConfig = {}) {
     this.available = config.available ?? true;
     this.mockLogs = config.logs ?? [
       { category: "info", message: "Mock agent starting..." },
@@ -204,6 +217,9 @@ export class MockAgent implements Agent {
     this.mockOutput = config.output ?? ["Mock agent output\n"];
     this.mockExitCode = config.exitCode ?? 0;
     this.mockDelay = config.delay ?? 0;
+    this.dexMock = config.dexMock;
+    // Default completeTask to true when dexMock is provided
+    this.completeTask = config.completeTask ?? (config.dexMock !== undefined);
   }
 
   async isAvailable(): Promise<boolean> {
@@ -213,6 +229,17 @@ export class MockAgent implements Agent {
   async run(options: AgentRunOptions): Promise<AgentRunResult> {
     const logs: LogEntry[] = [];
     const output: AgentOutput[] = [];
+
+    // If dexMock is provided and completeTask is true, start the first ready task
+    let taskToComplete: string | undefined;
+    if (this.dexMock && this.completeTask) {
+      const readyTasks = this.dexMock.listReady();
+      if (readyTasks.length > 0) {
+        const task = readyTasks[0]!;
+        this.dexMock.start(task.id);
+        taskToComplete = task.id;
+      }
+    }
 
     // Simulate delay if configured
     if (this.mockDelay > 0) {
@@ -233,6 +260,11 @@ export class MockAgent implements Agent {
       options.events?.onOutput?.(out);
     }
 
+    // If exitCode is 0 and we started a task, complete it
+    if (this.dexMock && this.completeTask && taskToComplete && this.mockExitCode === 0) {
+      this.dexMock.complete(taskToComplete, "Task completed by MockAgent");
+    }
+
     return {
       exitCode: this.mockExitCode,
       logs,
@@ -243,18 +275,20 @@ export class MockAgent implements Agent {
   /**
    * Configure the mock agent's behavior.
    */
-  configure(config: {
-    available?: boolean;
-    logs?: Array<{ category: LogCategory; message: string }>;
-    output?: string[];
-    exitCode?: number;
-    delay?: number;
-  }): void {
+  configure(config: MockAgentConfig): void {
     if (config.available !== undefined) this.available = config.available;
     if (config.logs !== undefined) this.mockLogs = config.logs;
     if (config.output !== undefined) this.mockOutput = config.output;
     if (config.exitCode !== undefined) this.mockExitCode = config.exitCode;
     if (config.delay !== undefined) this.mockDelay = config.delay;
+    if (config.dexMock !== undefined) {
+      this.dexMock = config.dexMock;
+      // Update completeTask default when dexMock is set
+      if (config.completeTask === undefined) {
+        this.completeTask = true;
+      }
+    }
+    if (config.completeTask !== undefined) this.completeTask = config.completeTask;
   }
 }
 
@@ -268,8 +302,6 @@ export function createAgent(): Agent {
 /**
  * Create a mock agent for testing.
  */
-export function createMockAgent(
-  config?: Parameters<typeof MockAgent.prototype.configure>[0]
-): MockAgent {
+export function createMockAgent(config?: MockAgentConfig): MockAgent {
   return new MockAgent(config);
 }
