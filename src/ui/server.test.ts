@@ -11,12 +11,21 @@
  *    and timing (receiveMessage with 1000ms timeout).
  *    Risk: Messages may arrive out of order or timeout on slow systems.
  *
- * 4. CLEANUP: afterEach properly stops servers, but WebSocket connections
- *    may not be fully closed before next test starts.
+ * 4. CLEANUP - FIXED: WebSocket connections are now tracked and explicitly
+ *    closed in afterEach with proper draining to avoid connection leaks.
  */
 import { test, expect, describe, afterEach } from "bun:test";
 import { startServer, DEFAULT_PORT, type WebSocketMessage } from "./server";
 import { createOutputBuffer } from "./buffer";
+
+/**
+ * Helper to create a WebSocket and track it for cleanup.
+ */
+function createTrackedWebSocket(url: string, sockets: WebSocket[]): WebSocket {
+  const ws = new WebSocket(url);
+  sockets.push(ws);
+  return ws;
+}
 
 /**
  * Helper to receive a WebSocket message with timeout.
@@ -48,8 +57,24 @@ function waitForOpen(ws: WebSocket, timeoutMs = 1000): Promise<boolean> {
 
 describe("startServer", () => {
   let server: ReturnType<typeof startServer> | null = null;
+  const activeWebSockets: WebSocket[] = [];
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Close all WebSocket connections
+    const hadConnections = activeWebSockets.length > 0;
+    for (const ws of activeWebSockets) {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+    }
+    activeWebSockets.length = 0;
+    
+    // Wait for connections to drain
+    if (hadConnections) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Stop server
     if (server) {
       server.stop();
       server = null;

@@ -1,9 +1,8 @@
 /**
  * FLAKINESS AUDIT (im8092sn):
  *
- * 1. HARDCODED TEST DIRECTORY: Uses `.test-prune` relative to source file.
- *    Risk: If multiple test runs overlap or cleanup fails, stale directory
- *    may interfere with subsequent runs.
+ * 1. HARDCODED TEST DIRECTORY - FIXED: Now uses mkdtempSync for unique temp directories.
+ *    Creates isolated test directories per test, eliminating collision risk.
  *
  * 2. PROCESS.CWD() CHANGES: Tests change working directory via process.chdir().
  *    Risk: If a test fails before afterEach, cwd remains changed for subsequent tests.
@@ -12,29 +11,32 @@
  * 3. SYNC FILESYSTEM OPERATIONS: Uses mkdirSync/rmSync which are blocking.
  *    Not flaky per se, but cleanup relies on afterEach running.
  *
- * 4. NO ISOLATION: Tests share the same TEST_DIR path. If afterEach cleanup
- *    fails, subsequent test runs may see leftover files.
+ * 4. TEST ISOLATION - FIXED: Each test gets unique temp directory via mkdtempSync.
+ *    No risk of leftover files interfering between test runs.
  */
 import { test, expect, beforeEach, afterEach } from "bun:test";
 import { findArtifacts, deleteArtifacts, confirmPrune } from "./prune";
-import { mkdirSync, rmSync, existsSync } from "node:fs";
+import { mkdirSync, rmSync, existsSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 
-const TEST_DIR = join(import.meta.dir, ".test-prune");
-const BACKUPS_DIR = join(TEST_DIR, ".math", "backups");
-
-// Store original cwd to restore after tests
+let testDir: string;
+let backupsDir: string;
 let originalCwd: string;
 
 beforeEach(() => {
+  // Create unique temp directory for this test
+  testDir = mkdtempSync(join(tmpdir(), "math-prune-test-"));
+  backupsDir = join(testDir, ".math", "backups");
   originalCwd = process.cwd();
-  mkdirSync(BACKUPS_DIR, { recursive: true });
-  process.chdir(TEST_DIR);
+  
+  mkdirSync(backupsDir, { recursive: true });
+  process.chdir(testDir);
 });
 
 afterEach(() => {
   process.chdir(originalCwd);
-  rmSync(TEST_DIR, { recursive: true, force: true });
+  rmSync(testDir, { recursive: true, force: true });
 });
 
 test("findArtifacts returns empty array for empty .math/backups directory", () => {
@@ -43,63 +45,63 @@ test("findArtifacts returns empty array for empty .math/backups directory", () =
 });
 
 test("findArtifacts finds all backup directories in .math/backups", () => {
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
-  mkdirSync(join(BACKUPS_DIR, "auth-setup"));
+  mkdirSync(join(backupsDir, "core-infrastructure"));
+  mkdirSync(join(backupsDir, "auth-setup"));
 
   const result = findArtifacts();
 
   expect(result).toHaveLength(2);
-  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
-  expect(result).toContain(join(BACKUPS_DIR, "auth-setup"));
+  expect(result).toContain(join(backupsDir, "core-infrastructure"));
+  expect(result).toContain(join(backupsDir, "auth-setup"));
 });
 
 test("findArtifacts finds backup directories with numeric suffixes", () => {
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure-1"));
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure-42"));
+  mkdirSync(join(backupsDir, "core-infrastructure"));
+  mkdirSync(join(backupsDir, "core-infrastructure-1"));
+  mkdirSync(join(backupsDir, "core-infrastructure-42"));
 
   const result = findArtifacts();
 
   expect(result).toHaveLength(3);
-  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
-  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure-1"));
-  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure-42"));
+  expect(result).toContain(join(backupsDir, "core-infrastructure"));
+  expect(result).toContain(join(backupsDir, "core-infrastructure-1"));
+  expect(result).toContain(join(backupsDir, "core-infrastructure-42"));
 });
 
 test("findArtifacts only returns directories", () => {
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
-  mkdirSync(join(BACKUPS_DIR, "auth-setup"));
+  mkdirSync(join(backupsDir, "core-infrastructure"));
+  mkdirSync(join(backupsDir, "auth-setup"));
   // Create a file that should be ignored
-  Bun.write(join(BACKUPS_DIR, "some-file.txt"), "not a directory");
+  Bun.write(join(backupsDir, "some-file.txt"), "not a directory");
 
   const result = findArtifacts();
 
   expect(result).toHaveLength(2);
-  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
-  expect(result).toContain(join(BACKUPS_DIR, "auth-setup"));
+  expect(result).toContain(join(backupsDir, "core-infrastructure"));
+  expect(result).toContain(join(backupsDir, "auth-setup"));
 });
 
 test("findArtifacts ignores files in .math/backups", () => {
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
+  mkdirSync(join(backupsDir, "core-infrastructure"));
   // Create a file that should be ignored
-  Bun.write(join(BACKUPS_DIR, "readme.md"), "not a directory");
+  Bun.write(join(backupsDir, "readme.md"), "not a directory");
 
   const result = findArtifacts();
 
   expect(result).toHaveLength(1);
-  expect(result).toContain(join(BACKUPS_DIR, "core-infrastructure"));
+  expect(result).toContain(join(backupsDir, "core-infrastructure"));
 });
 
 test("findArtifacts returns empty array when .math/backups does not exist", () => {
   // Remove the backups directory
-  rmSync(BACKUPS_DIR, { recursive: true, force: true });
+  rmSync(backupsDir, { recursive: true, force: true });
 
   const result = findArtifacts();
   expect(result).toEqual([]);
 });
 
 test("findArtifacts returns absolute paths", () => {
-  mkdirSync(join(BACKUPS_DIR, "core-infrastructure"));
+  mkdirSync(join(backupsDir, "core-infrastructure"));
 
   const result = findArtifacts();
 
@@ -110,8 +112,8 @@ test("findArtifacts returns absolute paths", () => {
 // deleteArtifacts tests
 
 test("deleteArtifacts deletes directories successfully", () => {
-  const dir1 = join(TEST_DIR, "todo-1-15-2025");
-  const dir2 = join(TEST_DIR, "todo-2-20-2025");
+  const dir1 = join(testDir, "todo-1-15-2025");
+  const dir2 = join(testDir, "todo-2-20-2025");
   mkdirSync(dir1);
   mkdirSync(dir2);
 
@@ -126,7 +128,7 @@ test("deleteArtifacts deletes directories successfully", () => {
 });
 
 test("deleteArtifacts deletes directories with contents", () => {
-  const dir = join(TEST_DIR, "todo-1-15-2025");
+  const dir = join(testDir, "todo-1-15-2025");
   mkdirSync(dir);
   Bun.write(join(dir, "file.txt"), "content");
   mkdirSync(join(dir, "subdir"));
@@ -147,7 +149,7 @@ test("deleteArtifacts returns empty arrays for empty input", () => {
 });
 
 test("deleteArtifacts handles non-existent paths gracefully", () => {
-  const nonExistent = join(TEST_DIR, "does-not-exist");
+  const nonExistent = join(testDir, "does-not-exist");
 
   const result = deleteArtifacts([nonExistent]);
 
@@ -157,8 +159,8 @@ test("deleteArtifacts handles non-existent paths gracefully", () => {
 });
 
 test("deleteArtifacts continues after a failure", () => {
-  const dir1 = join(TEST_DIR, "todo-1-15-2025");
-  const dir2 = join(TEST_DIR, "todo-2-20-2025");
+  const dir1 = join(testDir, "todo-1-15-2025");
+  const dir2 = join(testDir, "todo-2-20-2025");
   mkdirSync(dir1);
   mkdirSync(dir2);
 
