@@ -143,29 +143,56 @@ export async function dexComplete(id: string, result: string): Promise<void> {
 }
 
 /**
- * Result from dex archive --completed --dry-run
+ * Result from archiving tasks
  */
 export interface DexArchiveResult {
   archivedCount: number;
-  output: string;
+  archivedIds: string[];
+  errors: { id: string; error: string }[];
 }
 
 /**
- * Archive all completed top-level tasks via dex archive --completed
- * Returns the number of tasks archived and output
+ * Archive a single completed task via dex archive <id>
+ * Note: Task and all descendants must be completed, task must not have incomplete ancestors
+ */
+export async function dexArchive(id: string): Promise<void> {
+  const result = await $`dex archive ${id}`.quiet();
+  if (result.exitCode !== 0) {
+    throw new Error(`dex archive ${id} failed: ${result.stderr.toString()}`);
+  }
+}
+
+/**
+ * Archive all completed top-level tasks by archiving each individually.
+ * Returns the number of tasks archived and any errors.
  */
 export async function dexArchiveCompleted(): Promise<DexArchiveResult> {
-  const result = await $`dex archive --completed`.quiet();
-  if (result.exitCode !== 0) {
-    throw new Error(`dex archive --completed failed: ${result.stderr.toString()}`);
+  const status = await dexStatus();
+  const completedTasks = status.recentlyCompleted;
+  
+  const result: DexArchiveResult = {
+    archivedCount: 0,
+    archivedIds: [],
+    errors: [],
+  };
+  
+  for (const task of completedTasks) {
+    // Only archive top-level tasks (no parent)
+    if (task.parent_id !== null) {
+      continue;
+    }
+    
+    try {
+      await dexArchive(task.id);
+      result.archivedCount++;
+      result.archivedIds.push(task.id);
+    } catch (error) {
+      result.errors.push({
+        id: task.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
   
-  const output = result.text().trim();
-  
-  // Parse the output to get the count of archived tasks
-  // Expected format: "Archived N task(s)"
-  const match = output.match(/Archived\s+(\d+)\s+task/i);
-  const archivedCount = match && match[1] ? parseInt(match[1], 10) : 0;
-  
-  return { archivedCount, output };
+  return result;
 }

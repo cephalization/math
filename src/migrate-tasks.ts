@@ -118,30 +118,71 @@ export function parseTasksForMigration(content: string): Task[] {
 }
 
 /**
- * Import a single task to dex.
- * - Adds the task with `dex add "<content>" --id <id>`
- * - Sets up dependencies with `dex block <id> --by <dep-id>`
- * - Updates status: complete -> `dex complete <id>`, in_progress -> `dex start <id>`
+ * Result of creating a task in dex, includes the generated ID
  */
-export async function importTaskToDex(task: Task): Promise<ImportResult> {
+export interface DexCreateResult {
+  id: string;
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Import a single task to dex.
+ * - Creates the task with `dex create "<content>"`
+ * - Sets up dependencies with `dex edit <id> --add-blocker <dep-id>`
+ * - Updates status: complete -> `dex complete <id>`, in_progress -> `dex start <id>`
+ * 
+ * Note: dex generates its own IDs, so we track the mapping from old TASKS.md IDs
+ * to new dex IDs via the idMap parameter.
+ */
+export async function importTaskToDex(
+  task: Task,
+  idMap: Map<string, string> = new Map()
+): Promise<ImportResult> {
   const result: ImportResult = { id: task.id, success: true };
 
   try {
-    // Step 1: Add the task
-    const addResult = await $`dex add ${task.content} --id ${task.id}`.quiet();
-    if (addResult.exitCode !== 0) {
+    // Step 1: Create the task (dex generates its own ID)
+    // Use --description to include the original task ID for reference
+    const description = `Migrated from TASKS.md (original ID: ${task.id})`;
+    const createResult = await $`dex create ${task.content} --description ${description}`.quiet();
+    if (createResult.exitCode !== 0) {
       result.success = false;
-      result.error = `Failed to add task: ${addResult.stderr.toString()}`;
+      result.error = `Failed to create task: ${createResult.stderr.toString()}`;
       return result;
     }
 
+    // Parse the created task ID from the output
+    // Expected format: "Created task <id>" or similar
+    const output = createResult.text().trim();
+    const idMatch = output.match(/(?:Created task|Created)\s+([a-z0-9]+)/i);
+    if (!idMatch || !idMatch[1]) {
+      result.success = false;
+      result.error = `Failed to parse task ID from output: ${output}`;
+      return result;
+    }
+    const newDexId = idMatch[1];
+    
+    // Store the mapping from old ID to new ID
+    idMap.set(task.id, newDexId);
+
     // Step 2: Set up dependencies (block this task by its dependencies)
     for (const depId of task.dependencies) {
-      const blockResult =
-        await $`dex block ${task.id} --by ${depId}`.quiet();
-      if (blockResult.exitCode !== 0) {
+      // Look up the new dex ID for this dependency
+      const depDexId = idMap.get(depId);
+      if (!depDexId) {
+        // Dependency task hasn't been migrated yet or doesn't exist
+        // This can happen if dependencies are listed out of order
         result.success = false;
-        result.error = `Failed to set dependency ${depId}: ${blockResult.stderr.toString()}`;
+        result.error = `Dependency ${depId} not found - ensure tasks are imported in dependency order`;
+        return result;
+      }
+      
+      const editResult =
+        await $`dex edit ${newDexId} --add-blocker ${depDexId}`.quiet();
+      if (editResult.exitCode !== 0) {
+        result.success = false;
+        result.error = `Failed to set dependency ${depId}: ${editResult.stderr.toString()}`;
         return result;
       }
     }
@@ -149,14 +190,14 @@ export async function importTaskToDex(task: Task): Promise<ImportResult> {
     // Step 3: Update status based on task state
     if (task.status === "complete") {
       const completeResult =
-        await $`dex complete ${task.id} --result "Migrated from TASKS.md"`.quiet();
+        await $`dex complete ${newDexId} --result "Migrated from TASKS.md"`.quiet();
       if (completeResult.exitCode !== 0) {
         result.success = false;
         result.error = `Failed to mark complete: ${completeResult.stderr.toString()}`;
         return result;
       }
     } else if (task.status === "in_progress") {
-      const startResult = await $`dex start ${task.id}`.quiet();
+      const startResult = await $`dex start ${newDexId}`.quiet();
       if (startResult.exitCode !== 0) {
         result.success = false;
         result.error = `Failed to mark in_progress: ${startResult.stderr.toString()}`;
@@ -174,17 +215,63 @@ export async function importTaskToDex(task: Task): Promise<ImportResult> {
 }
 
 /**
+ * Topologically sort tasks so dependencies come before dependents.
+ * Tasks with no dependencies come first.
+ */
+function sortTasksByDependencies(tasks: Task[]): Task[] {
+  const taskMap = new Map<string, Task>();
+  for (const task of tasks) {
+    taskMap.set(task.id, task);
+  }
+
+  const sorted: Task[] = [];
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+
+  function visit(taskId: string): void {
+    if (visited.has(taskId)) return;
+    if (visiting.has(taskId)) {
+      // Circular dependency - just add it and move on
+      return;
+    }
+
+    const task = taskMap.get(taskId);
+    if (!task) return;
+
+    visiting.add(taskId);
+
+    // Visit dependencies first
+    for (const depId of task.dependencies) {
+      visit(depId);
+    }
+
+    visiting.delete(taskId);
+    visited.add(taskId);
+    sorted.push(task);
+  }
+
+  for (const task of tasks) {
+    visit(task.id);
+  }
+
+  return sorted;
+}
+
+/**
  * Import all tasks from TASKS.md content to dex.
+ * Tasks are sorted so dependencies are imported before dependents.
  * Returns a report of imported tasks with any errors.
  */
 export async function importAllTasksToDex(
   content: string
 ): Promise<MigrationReport> {
   const tasks = parseTasksForMigration(content);
+  const sortedTasks = sortTasksByDependencies(tasks);
   const results: ImportResult[] = [];
+  const idMap = new Map<string, string>();
 
-  for (const task of tasks) {
-    const result = await importTaskToDex(task);
+  for (const task of sortedTasks) {
+    const result = await importTaskToDex(task, idMap);
     results.push(result);
   }
 

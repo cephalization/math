@@ -53,22 +53,26 @@ NOTE:
 - Prefer code generation tools over manual coding when there are scripts to generate code (e.g. relay, openapi-codegen, etc).
 - If typed languages are used, prefer concrete, safe types (e.g. unknown instead of any in TypeScript)
 
-## Step 2: Plan the Tasks
+## Step 2: Plan the Tasks with Dex
 
-Break the user's goal into discrete, implementable tasks using this format:
+Break the user's goal into discrete, implementable tasks using the dex CLI.
 
-### task-id
-- content: Clear description of what to implement
-- status: pending
-- dependencies: comma-separated task IDs or "none"
+For each task, run:
+\`\`\`bash
+dex create "<task name>" --description "<detailed description of what to implement>"
+\`\`\`
+
+To set up dependencies between tasks (task B depends on task A completing first):
+\`\`\`bash
+dex edit <task-B-id> --add-blocker <task-A-id>
+\`\`\`
 
 Guidelines:
 - Tasks should be small enough for one focused work session
-- Use kebab-case for task IDs (e.g., setup-database, add-auth)
-- Order tasks logically with proper dependencies
-- Group related tasks into phases with markdown headers
+- Create tasks in dependency order (dependencies first)
 - Each task should have a clear, testable outcome
-- Reference the PROJECT'S test/build commands, not generic ones
+- Use detailed descriptions that explain what to implement and how to verify it's done
+- Reference the PROJECT'S test/build commands in descriptions, not generic ones
 
 ## Step 3: Update PROMPT.md Quick Reference
 
@@ -83,8 +87,8 @@ Example transformations:
 
 ## Step 4: Summarize
 
-After updating both files, briefly summarize:
-- What tasks were planned
+After creating tasks and updating PROMPT.md, briefly summarize:
+- What tasks were created (list the task IDs)
 - What project tooling was discovered
 - Any assumptions made`;
 
@@ -148,7 +152,6 @@ export async function runPlanningMode({
       return;
     }
 
-    const tasksPath = join(todoDir, "TASKS.md");
     const promptPath = join(todoDir, "PROMPT.md");
     const learningsPath = join(todoDir, "LEARNINGS.md");
 
@@ -167,7 +170,7 @@ USER'S GOAL:
 ${goal}`;
 
       const clarifyResult =
-        await Bun.$`opencode run -m ${model} ${clarifyPrompt} -f ${tasksPath} -f ${promptPath} --title ${
+        await Bun.$`opencode run -m ${model} ${clarifyPrompt} -f ${promptPath} --title ${
           "Planning: " + goal.slice(0, 40)
         }`.then((result) => result.text());
 
@@ -212,13 +215,13 @@ USER'S GOAL:
 ${goal}
 ${clarifications}
 
-Read the attached files and update TASKS.md with a well-structured task list for this goal.`;
+Read the attached files and use dex commands to create a well-structured task list for this goal.`;
 
     // If we asked questions, continue the session; otherwise start fresh
     const result =
       !skipQuestions && clarifications
-        ? await Bun.$`opencode run -c -m ${model} ${planPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`
-        : await Bun.$`opencode run -m ${model} ${planPrompt} -f ${tasksPath} -f ${promptPath} -f ${learningsPath}`;
+        ? await Bun.$`opencode run -c -m ${model} ${planPrompt} -f ${promptPath} -f ${learningsPath}`
+        : await Bun.$`opencode run -m ${model} ${planPrompt} -f ${promptPath} -f ${learningsPath}`;
 
     if (result.exitCode === 0) {
       console.log();
@@ -226,14 +229,14 @@ Read the attached files and update TASKS.md with a well-structured task list for
       console.log();
       console.log(`${colors.bold}Next steps:${colors.reset}`);
       console.log(
-        `  1. Review ${colors.cyan}.math/todo/TASKS.md${colors.reset} to verify the plan`
+        `  1. Run ${colors.cyan}dex list${colors.reset} to review the plan`
       );
       console.log(
         `  2. Run ${colors.cyan}math run${colors.reset} to start executing tasks`
       );
     } else {
       console.log(
-        `${colors.yellow}Planning completed with warnings. Check .math/todo/TASKS.md${colors.reset}`
+        `${colors.yellow}Planning completed with warnings. Run 'dex list' to check tasks.${colors.reset}`
       );
     }
   } catch (error) {
