@@ -56,3 +56,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Smart default pattern: `completeTask` defaults to `true` when `dexMock` is provided, avoiding boilerplate in most test cases
 - The `configure()` method also updates `completeTask` default when `dexMock` is set after construction
 - When creating test task fixtures, ensure all required DexTask fields are included (parent_id, priority, metadata, blocks) to avoid TypeScript errors
+
+## hplcftmx
+
+- Added `failAfterStart` option to MockAgent for simulating mid-execution failures
+- Key design: `failAfterStart` takes priority over other paths - if true with dexMock, it immediately starts the task, emits logs, and returns with exitCode: 1
+- The option is deliberately separate from `exitCode` because it simulates a specific failure mode: task starts but agent crashes before completing
+- Pattern: Early return from run() when simulating failure keeps the code path simple and explicit
+- This enables testing loop recovery scenarios where a task gets stuck in in_progress state
