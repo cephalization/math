@@ -282,7 +282,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     let nextTaskDetails: DexTaskDetails | null = null;
     try {
       readyTasks = await dex.listReady();
-      if (readyTasks.length > 0) {
+      if (readyTasks.length > 0 && readyTasks[0]) {
         nextTaskDetails = await dex.show(readyTasks[0].id);
       }
     } catch (error) {
