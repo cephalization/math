@@ -3,7 +3,7 @@ import { createInterface } from "node:readline/promises";
 import { join } from "node:path";
 import { $ } from "bun";
 import { getTodoDir, getBackupsDir } from "./paths";
-import { getDexDir } from "./dex";
+import { getDexDir, isDexAvailable } from "./dex";
 import { parseTasks, importAllTasksToDex, type MigrationReport } from "./migrate-tasks";
 import { PROMPT_TEMPLATE, LEARNINGS_TEMPLATE } from "./templates";
 
@@ -314,6 +314,31 @@ export async function migrateTasksToDexIfNeeded(): Promise<MigrationChoice | und
 
   if (!needsMigration) {
     return undefined;
+  }
+
+  // Check if dex is available before prompting for migration
+  const dexAvailable = await isDexAvailable();
+  if (!dexAvailable) {
+    const colors = {
+      reset: "\x1b[0m",
+      bold: "\x1b[1m",
+      yellow: "\x1b[33m",
+      cyan: "\x1b[36m",
+    };
+    console.log();
+    console.log(
+      `${colors.bold}${colors.yellow}TASKS.md detected but dex CLI is not installed${colors.reset}`
+    );
+    console.log();
+    console.log(
+      `Math now uses dex for task management. Please install dex first:`
+    );
+    console.log();
+    console.log(`  ${colors.cyan}bun add -g @zeeg/dex${colors.reset}`);
+    console.log();
+    console.log(`Or visit: ${colors.cyan}https://dex.rip/install${colors.reset}`);
+    console.log();
+    process.exit(1);
   }
 
   const choice = await promptDexMigration();
