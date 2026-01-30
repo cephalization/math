@@ -1,3 +1,19 @@
+/**
+ * FLAKINESS AUDIT (im8092sn):
+ *
+ * 1. PROCESS.CWD() CHANGES: Tests change working directory via process.chdir().
+ *    Risk: If a test fails before afterEach, cwd remains changed for subsequent tests.
+ *    Cleanup in afterEach properly restores originalCwd.
+ *
+ * 2. TEMP DIRECTORIES: Uses mkdtemp for isolated test dirs - good practice.
+ *    Creates unique temp directories per test, reducing collision risk.
+ *
+ * 3. CLEANUP: afterEach properly removes temp directories with rm -rf.
+ *    Tests are well-isolated from each other.
+ *
+ * 4. NO EXTERNAL DEPENDENCIES: Tests use mock modules instead of real dex CLI.
+ *    This is good - no dependency on external services.
+ */
 import { test, expect, describe, beforeEach, afterEach, mock, spyOn } from "bun:test";
 import { existsSync, mkdirSync, rmSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

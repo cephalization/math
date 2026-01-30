@@ -1,3 +1,22 @@
+/**
+ * FLAKINESS AUDIT (im8092sn):
+ *
+ * 1. HARDCODED PORTS (8314-8322): Each test uses a different hardcoded port.
+ *    If tests run in parallel or ports are already in use, tests will fail.
+ *    Risk: Port conflicts with other processes or parallel test runs.
+ *
+ * 2. TIMING DEPENDENCIES: Uses setTimeout for waiting (100ms, 50ms delays).
+ *    - Line 214, 220: `await new Promise((resolve) => setTimeout(resolve, 100))`
+ *    - Line 256: `await new Promise((resolve) => setTimeout(resolve, 50))`
+ *    Risk: Flaky on slow CI or under load.
+ *
+ * 3. WEBSOCKET RACE CONDITIONS: Tests rely on WebSocket message ordering
+ *    and timing (receiveMessage with 1000ms timeout).
+ *    Risk: Messages may arrive out of order or timeout on slow systems.
+ *
+ * 4. CLEANUP: afterEach properly stops servers, but WebSocket connections
+ *    may not be fully closed before next test starts.
+ */
 import { test, expect, describe, afterEach } from "bun:test";
 import { startServer, DEFAULT_PORT, type WebSocketMessage } from "./server";
 import { createOutputBuffer } from "./buffer";
@@ -50,9 +69,10 @@ describe("startServer", () => {
 
   test("starts server on custom port", () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 9999 });
+    // Use a less common port to avoid conflicts (9999 is often used by other services)
+    server = startServer({ buffer, port: 18999 });
 
-    expect(server.port).toBe(9999);
+    expect(server.port).toBe(18999);
   });
 
   test("serves HTML at /", async () => {

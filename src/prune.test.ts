@@ -1,3 +1,20 @@
+/**
+ * FLAKINESS AUDIT (im8092sn):
+ *
+ * 1. HARDCODED TEST DIRECTORY: Uses `.test-prune` relative to source file.
+ *    Risk: If multiple test runs overlap or cleanup fails, stale directory
+ *    may interfere with subsequent runs.
+ *
+ * 2. PROCESS.CWD() CHANGES: Tests change working directory via process.chdir().
+ *    Risk: If a test fails before afterEach, cwd remains changed for subsequent tests.
+ *    Cleanup in afterEach properly restores originalCwd.
+ *
+ * 3. SYNC FILESYSTEM OPERATIONS: Uses mkdirSync/rmSync which are blocking.
+ *    Not flaky per se, but cleanup relies on afterEach running.
+ *
+ * 4. NO ISOLATION: Tests share the same TEST_DIR path. If afterEach cleanup
+ *    fails, subsequent test runs may see leftover files.
+ */
 import { test, expect, beforeEach, afterEach } from "bun:test";
 import { findArtifacts, deleteArtifacts, confirmPrune } from "./prune";
 import { mkdirSync, rmSync, existsSync } from "node:fs";
