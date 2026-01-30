@@ -48,3 +48,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - One test kept `startServer({ buffer })` without port to verify DEFAULT_PORT behavior; all other tests use `port: 0`
 - Gotcha: The "custom port" test now validates that OS assigns a port > 0, rather than checking a specific hardcoded port
 - Verified fix by running tests 5 times in a row - all passed consistently
+
+## yvtc19jp
+
+- Enhanced MockAgent with optional DexMock integration for simulating task completion in tests
+- Key pattern: Use `type` imports for classes only used as types to avoid circular dependency issues (`import type { DexMock }`)
+- Smart default pattern: `completeTask` defaults to `true` when `dexMock` is provided, avoiding boilerplate in most test cases
+- The `configure()` method also updates `completeTask` default when `dexMock` is set after construction
+- When creating test task fixtures, ensure all required DexTask fields are included (parent_id, priority, metadata, blocks) to avoid TypeScript errors

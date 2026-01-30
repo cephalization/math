@@ -7,6 +7,8 @@ import {
   type LogCategory,
   type AgentRunOptions,
 } from "./agent";
+import { DexMock } from "./testing/dex-mock";
+import type { DexTask } from "./dex";
 
 describe("MockAgent", () => {
   test("isAvailable returns true by default", async () => {
@@ -175,5 +177,164 @@ describe("helper functions", () => {
     expect(output.text).toBe("Test output");
     expect(output.timestamp.getTime()).toBeGreaterThanOrEqual(before.getTime());
     expect(output.timestamp.getTime()).toBeLessThanOrEqual(after.getTime());
+  });
+});
+
+describe("MockAgent with DexMock integration", () => {
+  function createTestTask(overrides: Partial<DexTask> = {}): DexTask {
+    return {
+      id: "task-1",
+      parent_id: null,
+      name: "Test Task",
+      description: "A test task",
+      priority: 0,
+      completed: false,
+      result: null,
+      metadata: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      started_at: null,
+      completed_at: null,
+      blockedBy: [],
+      blocks: [],
+      children: [],
+      ...overrides,
+    };
+  }
+
+  test("completes first ready task when dexMock provided and exitCode is 0", async () => {
+    const dexMock = new DexMock();
+    dexMock.setTasks([createTestTask({ id: "task-1" })]);
+
+    const agent = createMockAgent({ dexMock, exitCode: 0 });
+    await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Verify task was started and completed
+    const calls = dexMock.getCalls();
+    expect(calls.find((c) => c.method === "listReady")).toBeDefined();
+    expect(calls.find((c) => c.method === "start" && c.args[0] === "task-1")).toBeDefined();
+    expect(calls.find((c) => c.method === "complete" && c.args[0] === "task-1")).toBeDefined();
+
+    // Task should be completed in dexMock
+    const taskDetails = dexMock.show("task-1");
+    expect(taskDetails.completed).toBe(true);
+  });
+
+  test("starts but does not complete task when exitCode is non-zero", async () => {
+    const dexMock = new DexMock();
+    dexMock.setTasks([createTestTask({ id: "task-1" })]);
+
+    const agent = createMockAgent({ dexMock, exitCode: 1 });
+    await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Verify task was started but not completed
+    const calls = dexMock.getCalls();
+    expect(calls.find((c) => c.method === "start" && c.args[0] === "task-1")).toBeDefined();
+    expect(calls.find((c) => c.method === "complete")).toBeUndefined();
+
+    // Task should be started but not completed
+    const taskDetails = dexMock.show("task-1");
+    expect(taskDetails.completed).toBe(false);
+  });
+
+  test("does not interact with dexMock when completeTask is false", async () => {
+    const dexMock = new DexMock();
+    dexMock.setTasks([createTestTask({ id: "task-1" })]);
+
+    const agent = createMockAgent({ dexMock, exitCode: 0, completeTask: false });
+    await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // No start or complete calls should be made
+    const calls = dexMock.getCalls();
+    expect(calls.find((c) => c.method === "start")).toBeUndefined();
+    expect(calls.find((c) => c.method === "complete")).toBeUndefined();
+  });
+
+  test("completeTask defaults to true when dexMock is provided", async () => {
+    const dexMock = new DexMock();
+    dexMock.setTasks([createTestTask({ id: "task-1" })]);
+
+    // Just pass dexMock, completeTask should default to true
+    const agent = createMockAgent({ dexMock });
+    await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Task should be completed
+    const taskDetails = dexMock.show("task-1");
+    expect(taskDetails.completed).toBe(true);
+  });
+
+  test("handles no ready tasks gracefully", async () => {
+    const dexMock = new DexMock();
+    // Task is already completed, so not ready
+    dexMock.setTasks([createTestTask({ id: "task-1", completed: true })]);
+
+    const agent = createMockAgent({ dexMock, exitCode: 0 });
+    const result = await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Should not throw, should still return success
+    expect(result.exitCode).toBe(0);
+
+    // No start call since no ready tasks
+    const calls = dexMock.getCalls();
+    expect(calls.find((c) => c.method === "start")).toBeUndefined();
+  });
+
+  test("only completes first ready task when multiple tasks are ready", async () => {
+    const dexMock = new DexMock();
+    dexMock.setTasks([
+      createTestTask({ id: "task-1" }),
+      createTestTask({ id: "task-2" }),
+      createTestTask({ id: "task-3" }),
+    ]);
+
+    const agent = createMockAgent({ dexMock, exitCode: 0 });
+    await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Only first task should be completed
+    expect(dexMock.show("task-1").completed).toBe(true);
+    expect(dexMock.show("task-2").completed).toBe(false);
+    expect(dexMock.show("task-3").completed).toBe(false);
+  });
+
+  test("can configure dexMock via configure method", async () => {
+    const agent = createMockAgent({ exitCode: 0 });
+    const dexMock = new DexMock();
+    dexMock.setTasks([createTestTask({ id: "task-1" })]);
+
+    // Configure dexMock after construction
+    agent.configure({ dexMock });
+
+    await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Task should be completed
+    expect(dexMock.show("task-1").completed).toBe(true);
   });
 });
