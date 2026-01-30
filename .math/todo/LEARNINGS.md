@@ -39,3 +39,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Pattern: Using an internal `InternalTask` interface that extends DexTask with an `inProgress` boolean keeps the state management clean
 - The mock computes `isBlocked` dynamically by checking if any task in `blockedBy` is incomplete - this matches real dex behavior
 - Call tracking with `getCalls()` enables assertions on method invocation order and arguments in tests
+
+## 8tzr13a5
+
+- Fixed port conflicts in server.test.ts by using `port: 0` which lets the OS assign available ports
+- Key pattern: When testing network servers, use `port: 0` and read the actual port from `server.port` to avoid hardcoded port conflicts
+- The fix replaces hardcoded ports (8314-8322) with dynamic port assignment via the OS
+- One test kept `startServer({ buffer })` without port to verify DEFAULT_PORT behavior; all other tests use `port: 0`
+- Gotcha: The "custom port" test now validates that OS assigns a port > 0, rather than checking a specific hardcoded port
+- Verified fix by running tests 5 times in a row - all passed consistently

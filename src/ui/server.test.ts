@@ -1,13 +1,10 @@
 /**
  * FLAKINESS AUDIT (im8092sn):
  *
- * 1. HARDCODED PORTS (8314-8322): Each test uses a different hardcoded port.
- *    If tests run in parallel or ports are already in use, tests will fail.
- *    Risk: Port conflicts with other processes or parallel test runs.
+ * 1. HARDCODED PORTS - FIXED (8tzr13a5): Now uses port 0 to let OS assign
+ *    available ports, eliminating port conflicts.
  *
  * 2. TIMING DEPENDENCIES: Uses setTimeout for waiting (100ms, 50ms delays).
- *    - Line 214, 220: `await new Promise((resolve) => setTimeout(resolve, 100))`
- *    - Line 256: `await new Promise((resolve) => setTimeout(resolve, 50))`
  *    Risk: Flaky on slow CI or under load.
  *
  * 3. WEBSOCKET RACE CONDITIONS: Tests rely on WebSocket message ordering
@@ -67,19 +64,21 @@ describe("startServer", () => {
     expect(server.port).toBe(8314);
   });
 
-  test("starts server on custom port", () => {
+  test("starts server on custom port using port 0 (OS assigns)", () => {
     const buffer = createOutputBuffer();
-    // Use a less common port to avoid conflicts (9999 is often used by other services)
-    server = startServer({ buffer, port: 18999 });
+    // Use port 0 to let OS assign an available port, avoiding conflicts
+    server = startServer({ buffer, port: 0 });
 
-    expect(server.port).toBe(18999);
+    // OS assigns an available port > 0
+    expect(server.port).toBeGreaterThan(0);
   });
 
   test("serves HTML at /", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8315 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
-    const response = await fetch("http://localhost:8315/");
+    const response = await fetch(`http://localhost:${server.port}/`);
 
     expect(response.status).toBe(200);
     // Bun's HTML imports add charset to content-type
@@ -92,18 +91,20 @@ describe("startServer", () => {
 
   test("returns 404 for unknown routes", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8316 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
-    const response = await fetch("http://localhost:8316/unknown");
+    const response = await fetch(`http://localhost:${server.port}/unknown`);
 
     expect(response.status).toBe(404);
   });
 
   test("accepts WebSocket connection at /ws", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8317 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
-    const ws = new WebSocket("ws://localhost:8317/ws");
+    const ws = new WebSocket(`ws://localhost:${server.port}/ws`);
 
     const connected = await waitForOpen(ws);
     expect(connected).toBe(true);
@@ -135,8 +136,9 @@ describe("WebSocket streaming", () => {
     buffer.appendLog("error", "test log 2");
     buffer.appendOutput("agent output 1");
 
-    server = startServer({ buffer, port: 8318 });
-    const ws = new WebSocket("ws://localhost:8318/ws");
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
+    const ws = new WebSocket(`ws://localhost:${server.port}/ws`);
     await waitForOpen(ws);
 
     // First message is connected
@@ -163,9 +165,10 @@ describe("WebSocket streaming", () => {
 
   test("broadcasts new log entries to connected clients", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8319 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
-    const ws = new WebSocket("ws://localhost:8319/ws");
+    const ws = new WebSocket(`ws://localhost:${server.port}/ws`);
     await waitForOpen(ws);
 
     // Drain connected and history messages
@@ -190,9 +193,10 @@ describe("WebSocket streaming", () => {
 
   test("broadcasts new agent output to connected clients", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8320 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
-    const ws = new WebSocket("ws://localhost:8320/ws");
+    const ws = new WebSocket(`ws://localhost:${server.port}/ws`);
     await waitForOpen(ws);
 
     // Drain connected and history messages
@@ -216,14 +220,15 @@ describe("WebSocket streaming", () => {
 
   test("broadcasts to multiple connected clients", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8321 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
     // Collect all messages received by each client
     const messages1: string[] = [];
     const messages2: string[] = [];
 
-    const ws1 = new WebSocket("ws://localhost:8321/ws");
-    const ws2 = new WebSocket("ws://localhost:8321/ws");
+    const ws1 = new WebSocket(`ws://localhost:${server.port}/ws`);
+    const ws2 = new WebSocket(`ws://localhost:${server.port}/ws`);
 
     ws1.onmessage = (event) => messages1.push(event.data as string);
     ws2.onmessage = (event) => messages2.push(event.data as string);
@@ -260,9 +265,10 @@ describe("WebSocket streaming", () => {
 
   test("unsubscribes from buffer on disconnect", async () => {
     const buffer = createOutputBuffer();
-    server = startServer({ buffer, port: 8322 });
+    // Use port 0 to let OS assign an available port
+    server = startServer({ buffer, port: 0 });
 
-    const ws = new WebSocket("ws://localhost:8322/ws");
+    const ws = new WebSocket(`ws://localhost:${server.port}/ws`);
     await waitForOpen(ws);
 
     // Drain initial messages
