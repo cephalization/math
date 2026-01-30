@@ -189,6 +189,16 @@ export interface MockAgentConfig {
   delay?: number;
   dexMock?: DexMock;
   completeTask?: boolean;
+  /**
+   * When true AND dexMock is provided:
+   * - Calls dexMock.start() to mark task in_progress
+   * - Emits error log
+   * - Returns with exitCode: 1
+   * - Does NOT call dexMock.complete()
+   * 
+   * This simulates agent failure mid-execution, leaving task stuck in_progress.
+   */
+  failAfterStart?: boolean;
 }
 
 /**
@@ -207,6 +217,7 @@ export class MockAgent implements Agent {
   private mockDelay: number;
   private dexMock: DexMock | undefined;
   private completeTask: boolean;
+  private failAfterStart: boolean;
 
   constructor(config: MockAgentConfig = {}) {
     this.available = config.available ?? true;
@@ -220,6 +231,7 @@ export class MockAgent implements Agent {
     this.dexMock = config.dexMock;
     // Default completeTask to true when dexMock is provided
     this.completeTask = config.completeTask ?? (config.dexMock !== undefined);
+    this.failAfterStart = config.failAfterStart ?? false;
   }
 
   async isAvailable(): Promise<boolean> {
@@ -229,6 +241,36 @@ export class MockAgent implements Agent {
   async run(options: AgentRunOptions): Promise<AgentRunResult> {
     const logs: LogEntry[] = [];
     const output: AgentOutput[] = [];
+
+    // Handle failAfterStart scenario - simulates agent failure mid-execution
+    if (this.failAfterStart && this.dexMock) {
+      const readyTasks = this.dexMock.listReady();
+      if (readyTasks.length > 0) {
+        const task = readyTasks[0]!;
+        this.dexMock.start(task.id);
+      }
+
+      // Emit configured logs (which should include error logs)
+      for (const { category, message } of this.mockLogs) {
+        const entry = createLogEntry(category, message);
+        logs.push(entry);
+        options.events?.onLog?.(entry);
+      }
+
+      // Emit configured output
+      for (const text of this.mockOutput) {
+        const out = createAgentOutput(text);
+        output.push(out);
+        options.events?.onOutput?.(out);
+      }
+
+      // Return failure - do NOT call dexMock.complete()
+      return {
+        exitCode: 1,
+        logs,
+        output,
+      };
+    }
 
     // If dexMock is provided and completeTask is true, start the first ready task
     let taskToComplete: string | undefined;
@@ -289,6 +331,7 @@ export class MockAgent implements Agent {
       }
     }
     if (config.completeTask !== undefined) this.completeTask = config.completeTask;
+    if (config.failAfterStart !== undefined) this.failAfterStart = config.failAfterStart;
   }
 }
 

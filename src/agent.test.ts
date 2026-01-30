@@ -337,4 +337,41 @@ describe("MockAgent with DexMock integration", () => {
     // Task should be completed
     expect(dexMock.show("task-1").completed).toBe(true);
   });
+
+  test("failAfterStart: starts task but does not complete it, leaves task in_progress", async () => {
+    const dexMock = new DexMock();
+    dexMock.setTasks([createTestTask({ id: "task-1" })]);
+
+    const agent = createMockAgent({
+      dexMock,
+      failAfterStart: true,
+      logs: [{ category: "error", message: "Simulated failure" }],
+    });
+
+    const result = await agent.run({
+      model: "test",
+      prompt: "test",
+      files: [],
+    });
+
+    // Should return exitCode 1
+    expect(result.exitCode).toBe(1);
+
+    // Should emit error log
+    expect(result.logs).toHaveLength(1);
+    expect(result.logs[0]!.category).toBe("error");
+    expect(result.logs[0]!.message).toBe("Simulated failure");
+
+    // Verify task was started
+    const calls = dexMock.getCalls();
+    expect(calls.find((c) => c.method === "start" && c.args[0] === "task-1")).toBeDefined();
+
+    // Verify task was NOT completed
+    expect(calls.find((c) => c.method === "complete")).toBeUndefined();
+
+    // Task should still be in_progress (started but not completed)
+    const taskDetails = dexMock.show("task-1");
+    expect(taskDetails.completed).toBe(false);
+    expect(taskDetails.started_at).not.toBeNull();
+  });
 });
