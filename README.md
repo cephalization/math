@@ -1,25 +1,26 @@
-# math - Multi-Agent Todo Harness
+# math - Multi-Agent Task Harness
 
-A light meta agent orchestration harness designed to coordinate multiple AI agents working together to accomplish tasks from a TODO list.
+A light meta agent orchestration harness designed to coordinate multiple AI agents working together to accomplish tasks managed by [dex](https://dex.rip).
 
 ## Core Concept
 
-The primary responsibility of this harness is to **reduce context bloat** by digesting a project plan into three documents:
+The primary responsibility of this harness is to **reduce context bloat** by digesting a project plan into focused documents:
 
 | Document | Purpose |
 | ---------- | --------- |
-| `TASKS.md` | Task list with status tracking and dependencies |
+| `dex` | Task tracking with status, dependencies, and context |
 | `LEARNINGS.md` | Accumulated insights from completed tasks |
 | `PROMPT.md` | System prompt with guardrails ("signs") |
 
-The harness consists of a simple for-loop, executing a new coding agent with a mandate from `PROMPT.md` to complete a *single* task from `TASKS.md`, while reading and recording any insight gained during the work into `LEARNINGS.md`.
+The harness consists of a simple for-loop, executing a new coding agent with a mandate from `PROMPT.md` to complete a *single* task from dex, while reading and recording any insight gained during the work into `LEARNINGS.md`.
 
 ### Directory Structure
 
 | Path | Description |
 | ---- | ----------- |
-| `.math/todo/` | Active sprint files (PROMPT.md, TASKS.md, LEARNINGS.md) |
-| `.math/backups/<summary>/` | Archived sprints from `math iterate`, named with AI-generated descriptions |
+| `.dex/` | Dex task storage (tasks.jsonl) |
+| `.math/todo/` | Active sprint files (PROMPT.md, LEARNINGS.md) |
+| `.math/backups/` | Archived learnings from `math iterate` |
 
 ## Requirements
 
@@ -30,23 +31,19 @@ The harness consists of a simple for-loop, executing a new coding agent with a m
 curl -fsSL https://bun.sh/install | bash
 ```
 
-Why Bun?
+**[dex](https://dex.rip) is required** for task management.
 
-- This tool is written in TypeScript and uses Bun's native TypeScript execution (no compilation step)
-- The CLI uses a `#!/usr/bin/env bun` shebang for direct execution
+```bash
+# Install dex
+bun add -g @zeeg/dex
+```
 
-
-**[OpenCode](https://opencode.ai) is required** to run this tool.
+**[OpenCode](https://opencode.ai) is required** to run the agent loop.
 
 ```bash
 # Install OpenCode
 curl -fsSL https://opencode.ai/install | bash
 ```
-
-Why OpenCode?
-
-- OpenCode provides a consistent and reliable interface for running the agent loop
-- It supports many models, is easy to use, and is free to use
 
 ## Installation
 
@@ -77,7 +74,7 @@ bun link
 math init
 ```
 
-Creates a `.math/todo/` directory with template files and offers to run **planning mode** to help you break down your goal into tasks.
+Initializes dex and creates a `.math/todo/` directory with template files. Offers to run **planning mode** to help you break down your goal into tasks.
 
 Options:
 
@@ -98,7 +95,7 @@ Options:
 Interactively plan your tasks with AI assistance. The planner uses a two-phase approach:
 
 1. **Clarification phase**: The AI analyzes your goal and asks 3-5 clarifying questions
-2. **Planning phase**: Using your answers, it generates a well-structured task list
+2. **Planning phase**: Using your answers, it creates tasks in dex with proper dependencies
 
 Use `--quick` to skip the clarification phase if you want a faster, assumption-based plan.
 
@@ -116,10 +113,10 @@ Options:
 
 Iteratively run the agent loop until all tasks are complete. Each iteration will:
 
-- Read the `TASKS.md` file to find the next task to complete
-- Invoke the agent with the `PROMPT.md` file and the `TASKS.md` file
-- The agent will complete the task and update the `TASKS.md` file
-- The agent will log its learnings to the `LEARNINGS.md` file
+- Query dex to find the next ready task
+- Invoke the agent with `PROMPT.md` and task context
+- The agent will complete the task and mark it done in dex
+- The agent will log learnings to `LEARNINGS.md`
 - The agent will commit the changes to the repository
 - The agent will exit
 
@@ -137,29 +134,39 @@ Shows task progress with a visual progress bar and next task info.
 math iterate
 ```
 
-Backs up `.math/todo/` to `.math/backups/<summary>/` and resets for a new goal:
+Archives completed tasks and resets for a new goal:
 
-- TASKS.md and LEARNINGS.md are reset to templates
+- Completed dex tasks are archived
+- LEARNINGS.md is backed up and reset
 - PROMPT.md is preserved (keeping your accumulated "signs")
 - Offers to run planning mode for your new goal
-
-The `<summary>` is a short description of the completed sprint (e.g., `add-user-auth`, `fix-api-bugs`).
 
 Options:
 
 - `--no-plan` - Skip the planning prompt
 
-## Task Format
+## Task Management
 
-Tasks in `TASKS.md` follow this format:
+Tasks are managed by [dex](https://dex.rip). Common commands:
 
-```markdown
-### task-id
+```bash
+# List ready tasks
+dex list --ready
 
-- content: Description of what to implement
-- status: pending | in_progress | complete
-- dependencies: task-1, task-2
+# Create a new task
+dex create "Task description" --description "Detailed context"
+
+# View task details
+dex show <task-id>
+
+# Mark task complete
+dex complete <task-id> --result "What was done"
+
+# View overall status
+dex status
 ```
+
+See the [dex documentation](https://dex.rip/cli) for full CLI reference.
 
 ## The Loop
 
@@ -167,11 +174,11 @@ Tasks in `TASKS.md` follow this format:
 ┌─────────────────────────────────────────────────────────────┐
 │                      math run (loop)                        │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  1. Check TASKS.md for pending tasks                  │  │
+│  │  1. Query dex for ready tasks                         │  │
 │  │  2. If all complete → EXIT SUCCESS                    │  │
-│  │  3. Invoke agent with PROMPT.md + TASKS.md            │  │
-│  │  4. Agent: pick task → implement → test → commit      │  │
-│  │  5. Agent: update TASKS.md → log learnings → EXIT     │  │
+│  │  3. Invoke agent with PROMPT.md + task context        │  │
+│  │  4. Agent: start task → implement → test → commit     │  │
+│  │  5. Agent: complete task in dex → log learnings       │  │
 │  │  6. Loop back to step 1                               │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -185,10 +192,10 @@ When you run `math init`, `math iterate`, or `math plan`, the harness can invoke
 2. OpenCode asks clarifying questions to understand your requirements
 3. You answer the questions interactively
 4. OpenCode breaks your goal into discrete, implementable tasks
-5. Tasks are written to `TASKS.md` with proper dependencies
+5. Tasks are created in dex with proper dependencies
 6. You're ready to run `math run`
 
-This bridges the gap between "I want to build X" and a structured task list. The clarifying questions phase uses OpenCode's session continuation feature to maintain context across the conversation.
+This bridges the gap between "I want to build X" and a structured task list.
 
 ## Signs (Guardrails)
 
@@ -214,6 +221,7 @@ Signs accumulate over time, making the agent increasingly reliable.
 ## Credits
 
 - **Ralph Methodology**: [Geoffrey Huntley](https://ghuntley.com/ralph/)
+- **Task Management**: [dex](https://dex.rip)
 - **Agent Runtime**: [OpenCode](https://opencode.ai)
 
 ## License
