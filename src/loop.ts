@@ -6,8 +6,8 @@ import { createOutputBuffer, type OutputBuffer } from "./ui/buffer";
 import { startServer, DEFAULT_PORT } from "./ui/server";
 import { getTodoDir } from "./paths";
 import { migrateIfNeeded } from "./migration";
-import { isDexAvailable, dexStatus, dexListReady, dexShow } from "./dex";
-import type { DexStatus, DexTask, DexTaskDetails } from "./dex";
+import { isDexAvailable, dexStatus, dexListReady, dexShow, defaultDexClient } from "./dex";
+import type { DexClient, DexStatus, DexTask, DexTaskDetails } from "./dex";
 
 const colors = {
   reset: "\x1b[0m",
@@ -28,6 +28,8 @@ export interface LoopOptions {
   buffer?: OutputBuffer;
   /** Enable web UI server (default: true) */
   ui?: boolean;
+  /** Dex client for dependency injection (defaults to real CLI) */
+  dexClient?: DexClient;
 }
 
 /**
@@ -137,6 +139,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   const pauseSeconds = options.pauseSeconds || 3;
   const dryRun = options.dryRun || false;
   const uiEnabled = options.ui !== false; // default: true
+  const dex = options.dexClient || defaultDexClient;
 
   // Create or use provided buffer - needed for UI server
   const buffer =
@@ -168,7 +171,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   }
 
   // Verify dex is available
-  if (!(await isDexAvailable())) {
+  if (!(await dex.isAvailable())) {
     throw new Error(
       "dex not found in PATH.\n" +
         "Install from: https://dex.rip/"
@@ -240,7 +243,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     // Get task status from dex
     let status: DexStatus;
     try {
-      status = await dexStatus();
+      status = await dex.status();
     } catch (error) {
       logError(
         `Failed to get dex status: ${error instanceof Error ? error.message : error}`
@@ -278,9 +281,9 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
     let readyTasks: DexTask[] = [];
     let nextTaskDetails: DexTaskDetails | null = null;
     try {
-      readyTasks = await dexListReady();
-      if (readyTasks.length > 0 && readyTasks[0]) {
-        nextTaskDetails = await dexShow(readyTasks[0].id);
+      readyTasks = await dex.listReady();
+      if (readyTasks.length > 0) {
+        nextTaskDetails = await dex.show(readyTasks[0].id);
       }
     } catch (error) {
       logWarning(
@@ -346,7 +349,7 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
 
         // Check if any progress was made by comparing dex status
         try {
-          const newStatus = await dexStatus();
+          const newStatus = await dex.status();
           if (newStatus.stats.completed > stats.completed) {
             logWarning("Progress was made despite error, continuing...");
           } else {
