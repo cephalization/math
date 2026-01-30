@@ -1,46 +1,42 @@
 /**
  * FLAKINESS AUDIT (im8092sn):
  *
- * 1. HARDCODED TEST DIRECTORY: Uses `.test-migration` relative to source file.
- *    Risk: If multiple test runs overlap or cleanup fails, stale directory
- *    may interfere with subsequent runs.
+ * 1. HARDCODED TEST DIRECTORY - FIXED: Now uses mkdtemp for unique temp directories.
+ *    Creates isolated test directories per test, eliminating collision risk.
  *
  * 2. PROCESS.CWD() CHANGES: Tests change working directory via process.chdir().
  *    Risk: If a test fails before afterEach, cwd remains changed for subsequent tests.
- *    Cleanup in afterEach properly restores cwd to import.meta.dir.
+ *    Cleanup in afterEach properly restores originalCwd.
  *
  * 3. ASYNC FILESYSTEM OPS: Uses async mkdir/rm/writeFile for setup/teardown.
- *    Good practice, but cleanup in afterEach must complete before next test.
+ *    Good practice, and cleanup in afterEach properly completes before next test.
  *
- * 4. NO UNIQUE TEST ISOLATION: Tests share the same TEST_DIR path.
- *    If cleanup fails, subsequent test runs may see leftover files.
+ * 4. TEST ISOLATION - FIXED: Each test gets unique temp directory via mkdtemp.
+ *    No risk of leftover files interfering between test runs.
  */
 import { test, expect, beforeEach, afterEach, mock } from "bun:test";
 import { existsSync } from "node:fs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile, mkdtemp } from "node:fs/promises";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { hasLegacyTodoDir, hasNewTodoDir, migrateIfNeeded } from "./migration";
 
-// Use a temp directory for testing
-const TEST_DIR = join(import.meta.dir, ".test-migration");
+let testDir: string;
+let originalCwd: string;
 
 beforeEach(async () => {
-  // Clean up and create fresh test directory
-  if (existsSync(TEST_DIR)) {
-    await rm(TEST_DIR, { recursive: true });
-  }
-  await mkdir(TEST_DIR, { recursive: true });
+  // Create unique temp directory for this test
+  testDir = await mkdtemp(join(tmpdir(), "math-migration-test-"));
+  originalCwd = process.cwd();
 
   // Change to test directory
-  process.chdir(TEST_DIR);
+  process.chdir(testDir);
 });
 
 afterEach(async () => {
-  // Go back to original directory and clean up
-  process.chdir(import.meta.dir);
-  if (existsSync(TEST_DIR)) {
-    await rm(TEST_DIR, { recursive: true });
-  }
+  // Restore original directory and clean up
+  process.chdir(originalCwd);
+  await rm(testDir, { recursive: true, force: true });
 });
 
 test("hasLegacyTodoDir returns false when no todo/ exists", () => {
@@ -48,25 +44,25 @@ test("hasLegacyTodoDir returns false when no todo/ exists", () => {
 });
 
 test("hasLegacyTodoDir returns false when todo/ exists but is empty", async () => {
-  await mkdir(join(TEST_DIR, "todo"));
+  await mkdir(join(testDir, "todo"));
   expect(hasLegacyTodoDir()).toBe(false);
 });
 
 test("hasLegacyTodoDir returns true when todo/ has TASKS.md", async () => {
-  await mkdir(join(TEST_DIR, "todo"));
-  await writeFile(join(TEST_DIR, "todo", "TASKS.md"), "# Tasks");
+  await mkdir(join(testDir, "todo"));
+  await writeFile(join(testDir, "todo", "TASKS.md"), "# Tasks");
   expect(hasLegacyTodoDir()).toBe(true);
 });
 
 test("hasLegacyTodoDir returns true when todo/ has PROMPT.md", async () => {
-  await mkdir(join(TEST_DIR, "todo"));
-  await writeFile(join(TEST_DIR, "todo", "PROMPT.md"), "# Prompt");
+  await mkdir(join(testDir, "todo"));
+  await writeFile(join(testDir, "todo", "PROMPT.md"), "# Prompt");
   expect(hasLegacyTodoDir()).toBe(true);
 });
 
 test("hasLegacyTodoDir returns true when todo/ has LEARNINGS.md", async () => {
-  await mkdir(join(TEST_DIR, "todo"));
-  await writeFile(join(TEST_DIR, "todo", "LEARNINGS.md"), "# Learnings");
+  await mkdir(join(testDir, "todo"));
+  await writeFile(join(testDir, "todo", "LEARNINGS.md"), "# Learnings");
   expect(hasLegacyTodoDir()).toBe(true);
 });
 
@@ -75,13 +71,13 @@ test("hasNewTodoDir returns false when .math/todo/ does not exist", () => {
 });
 
 test("hasNewTodoDir returns true when .math/todo/ exists", async () => {
-  await mkdir(join(TEST_DIR, ".math", "todo"), { recursive: true });
+  await mkdir(join(testDir, ".math", "todo"), { recursive: true });
   expect(hasNewTodoDir()).toBe(true);
 });
 
 test("migrateIfNeeded returns true when already migrated", async () => {
   // Create new structure
-  await mkdir(join(TEST_DIR, ".math", "todo"), { recursive: true });
+  await mkdir(join(testDir, ".math", "todo"), { recursive: true });
 
   const result = await migrateIfNeeded();
   expect(result).toBe(true);
@@ -98,7 +94,7 @@ test("migrateIfNeeded returns true when no legacy directory exists", async () =>
 
 test("migrateIfNeeded moves files when user confirms (simulated)", async () => {
   // Create legacy structure with files
-  const legacyDir = join(TEST_DIR, "todo");
+  const legacyDir = join(testDir, "todo");
   await mkdir(legacyDir);
   await writeFile(join(legacyDir, "TASKS.md"), "# Tasks\ncontent");
   await writeFile(join(legacyDir, "PROMPT.md"), "# Prompt\ncontent");
@@ -112,8 +108,8 @@ test("migrateIfNeeded moves files when user confirms (simulated)", async () => {
   // the pre-conditions and post-conditions that file moving would achieve
   // by manually performing what performMigration does
   const { rename } = await import("node:fs/promises");
-  const mathDir = join(TEST_DIR, ".math");
-  const newTodoDir = join(TEST_DIR, ".math", "todo");
+  const mathDir = join(testDir, ".math");
+  const newTodoDir = join(testDir, ".math", "todo");
 
   await mkdir(mathDir, { recursive: true });
   await rename(legacyDir, newTodoDir);
@@ -127,7 +123,7 @@ test("migrateIfNeeded moves files when user confirms (simulated)", async () => {
 });
 
 test("legacy directory with multiple files is correctly detected", async () => {
-  const legacyDir = join(TEST_DIR, "todo");
+  const legacyDir = join(testDir, "todo");
   await mkdir(legacyDir);
   await writeFile(join(legacyDir, "TASKS.md"), "# Tasks");
   await writeFile(join(legacyDir, "PROMPT.md"), "# Prompt");
@@ -137,7 +133,7 @@ test("legacy directory with multiple files is correctly detected", async () => {
 });
 
 test("legacy directory with unrelated files is not detected", async () => {
-  const legacyDir = join(TEST_DIR, "todo");
+  const legacyDir = join(testDir, "todo");
   await mkdir(legacyDir);
   await writeFile(join(legacyDir, "random.txt"), "random content");
 
@@ -146,15 +142,15 @@ test("legacy directory with unrelated files is not detected", async () => {
 
 test("new todo directory detection is independent of file contents", async () => {
   // .math/todo just needs to exist, no files required
-  await mkdir(join(TEST_DIR, ".math", "todo"), { recursive: true });
+  await mkdir(join(testDir, ".math", "todo"), { recursive: true });
   expect(hasNewTodoDir()).toBe(true);
 
   // Even empty, it should be detected
-  expect(existsSync(join(TEST_DIR, ".math", "todo", "TASKS.md"))).toBe(false);
+  expect(existsSync(join(testDir, ".math", "todo", "TASKS.md"))).toBe(false);
 });
 
 test("migration preserves file contents", async () => {
-  const legacyDir = join(TEST_DIR, "todo");
+  const legacyDir = join(testDir, "todo");
   await mkdir(legacyDir);
 
   const tasksContent = "# Tasks\n\n## Phase 1\n\n### task-1\n- content: Test task";
@@ -167,8 +163,8 @@ test("migration preserves file contents", async () => {
 
   // Perform migration manually (simulating user confirmation)
   const { rename, readFile } = await import("node:fs/promises");
-  const newTodoDir = join(TEST_DIR, ".math", "todo");
-  await mkdir(join(TEST_DIR, ".math"), { recursive: true });
+  const newTodoDir = join(testDir, ".math", "todo");
+  await mkdir(join(testDir, ".math"), { recursive: true });
   await rename(legacyDir, newTodoDir);
 
   // Verify file contents are preserved
