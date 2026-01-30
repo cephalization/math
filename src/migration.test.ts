@@ -1,3 +1,20 @@
+/**
+ * FLAKINESS AUDIT (im8092sn):
+ *
+ * 1. HARDCODED TEST DIRECTORY: Uses `.test-migration` relative to source file.
+ *    Risk: If multiple test runs overlap or cleanup fails, stale directory
+ *    may interfere with subsequent runs.
+ *
+ * 2. PROCESS.CWD() CHANGES: Tests change working directory via process.chdir().
+ *    Risk: If a test fails before afterEach, cwd remains changed for subsequent tests.
+ *    Cleanup in afterEach properly restores cwd to import.meta.dir.
+ *
+ * 3. ASYNC FILESYSTEM OPS: Uses async mkdir/rm/writeFile for setup/teardown.
+ *    Good practice, but cleanup in afterEach must complete before next test.
+ *
+ * 4. NO UNIQUE TEST ISOLATION: Tests share the same TEST_DIR path.
+ *    If cleanup fails, subsequent test runs may see leftover files.
+ */
 import { test, expect, beforeEach, afterEach, mock } from "bun:test";
 import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
