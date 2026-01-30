@@ -220,7 +220,7 @@ describe("MockAgent with DexMock integration", () => {
     expect(calls.find((c) => c.method === "complete" && c.args[0] === "task-1")).toBeDefined();
 
     // Task should be completed in dexMock
-    const taskDetails = dexMock.show("task-1");
+    const taskDetails = await dexMock.show("task-1");
     expect(taskDetails.completed).toBe(true);
   });
 
@@ -241,7 +241,7 @@ describe("MockAgent with DexMock integration", () => {
     expect(calls.find((c) => c.method === "complete")).toBeUndefined();
 
     // Task should be started but not completed
-    const taskDetails = dexMock.show("task-1");
+    const taskDetails = await dexMock.show("task-1");
     expect(taskDetails.completed).toBe(false);
   });
 
@@ -275,7 +275,7 @@ describe("MockAgent with DexMock integration", () => {
     });
 
     // Task should be completed
-    const taskDetails = dexMock.show("task-1");
+    const taskDetails = await dexMock.show("task-1");
     expect(taskDetails.completed).toBe(true);
   });
 
@@ -315,9 +315,9 @@ describe("MockAgent with DexMock integration", () => {
     });
 
     // Only first task should be completed
-    expect(dexMock.show("task-1").completed).toBe(true);
-    expect(dexMock.show("task-2").completed).toBe(false);
-    expect(dexMock.show("task-3").completed).toBe(false);
+    expect((await dexMock.show("task-1")).completed).toBe(true);
+    expect((await dexMock.show("task-2")).completed).toBe(false);
+    expect((await dexMock.show("task-3")).completed).toBe(false);
   });
 
   test("can configure dexMock via configure method", async () => {
@@ -335,7 +335,7 @@ describe("MockAgent with DexMock integration", () => {
     });
 
     // Task should be completed
-    expect(dexMock.show("task-1").completed).toBe(true);
+    expect((await dexMock.show("task-1")).completed).toBe(true);
   });
 
   test("failAfterStart: starts task but does not complete it, leaves task in_progress", async () => {
@@ -370,7 +370,7 @@ describe("MockAgent with DexMock integration", () => {
     expect(calls.find((c) => c.method === "complete")).toBeUndefined();
 
     // Task should still be in_progress (started but not completed)
-    const taskDetails = dexMock.show("task-1");
+    const taskDetails = await dexMock.show("task-1");
     expect(taskDetails.completed).toBe(false);
     expect(taskDetails.started_at).not.toBeNull();
   });

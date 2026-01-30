@@ -244,7 +244,7 @@ export class MockAgent implements Agent {
 
     // Handle failAfterStart scenario - simulates agent failure mid-execution
     if (this.failAfterStart && this.dexMock) {
-      const readyTasks = this.dexMock.listReady();
+      const readyTasks = await this.dexMock.listReady();
       if (readyTasks.length > 0) {
         const task = readyTasks[0]!;
         this.dexMock.start(task.id);
@@ -275,7 +275,7 @@ export class MockAgent implements Agent {
     // If dexMock is provided and completeTask is true, start the first ready task
     let taskToComplete: string | undefined;
     if (this.dexMock && this.completeTask) {
-      const readyTasks = this.dexMock.listReady();
+      const readyTasks = await this.dexMock.listReady();
       if (readyTasks.length > 0) {
         const task = readyTasks[0]!;
         this.dexMock.start(task.id);

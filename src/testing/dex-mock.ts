@@ -1,4 +1,4 @@
-import type { DexTask, DexTaskDetails, DexStatus, DexStats } from "../dex";
+import type { DexTask, DexTaskDetails, DexStatus, DexStats, DexClient } from "../dex";
 
 /**
  * Call record for tracking method invocations
@@ -21,8 +21,10 @@ interface InternalTask extends DexTask {
  *
  * Provides in-memory implementations of core dex operations
  * for testing agent and loop code without requiring the real dex CLI.
+ * 
+ * Implements the DexClient interface for dependency injection.
  */
-export class DexMock {
+export class DexMock implements DexClient {
   private tasks: Map<string, InternalTask> = new Map();
   private statusConfig: DexStatus | null = null;
   private calls: DexMockCall[] = [];
@@ -82,9 +84,17 @@ export class DexMock {
   }
 
   /**
+   * Check if dex is available (always true for mock)
+   */
+  async isAvailable(): Promise<boolean> {
+    this.recordCall("isAvailable", []);
+    return true;
+  }
+
+  /**
    * Get status - returns configured status or computes from tasks
    */
-  status(): DexStatus {
+  async status(): Promise<DexStatus> {
     this.recordCall("status", []);
 
     if (this.statusConfig) {
@@ -114,7 +124,7 @@ export class DexMock {
   /**
    * List ready tasks (not blocked, not started, not completed)
    */
-  listReady(): DexTask[] {
+  async listReady(): Promise<DexTask[]> {
     this.recordCall("listReady", []);
 
     return Array.from(this.tasks.values()).filter((t) => this.isTaskReady(t));
@@ -123,7 +133,7 @@ export class DexMock {
   /**
    * Show task details
    */
-  show(id: string): DexTaskDetails {
+  async show(id: string): Promise<DexTaskDetails> {
     this.recordCall("show", [id]);
 
     const task = this.tasks.get(id);
