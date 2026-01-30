@@ -75,3 +75,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Pattern: `const dex = options.dexClient ?? defaultDexClient` provides clean default behavior while enabling testing
 - The `defaultDexClient` object wraps the existing standalone functions for backward compatibility
 - Tests now pass consistently (verified 5 runs) without relying on global mock state
+
+## 3d588ps4
+
+- Created integration test validating end-to-end flow: DexMock with 3 dependent tasks -> MockAgent completes them -> loop exits successfully
+- Critical gotcha: `pauseSeconds: 0` doesn't work because of falsy check in loop.ts (`options.pauseSeconds || 3`). Use `pauseSeconds: 0.001` instead.
+- This is an existing bug in loop.ts but fixing it was out of scope for this task (YAGNI principle)
+- Pattern: Use `dexMock.getCalls()` to verify the exact sequence of start/complete calls and their order
+- The test verifies: 3 tasks completed in dependency order (task-1 -> task-2 -> task-3), correct call sequence, no max iterations exceeded
+- Test runs in ~56ms (well under the 1 second requirement)
