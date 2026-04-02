@@ -123,3 +123,10 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - `Bun.file(path).size` returns 0 for non-existent files - good way to check file existence before reading
 - Tests use `mkdtemp()` for isolated temp directories per test - follows established pattern from LEARNINGS.md
 - Pre-existing prune.test.ts failures remain (macOS `/var` vs `/private/var` path issue)
+
+## 3vwxyw1q
+
+- Updated plan command to load persisted model from config with priority: CLI --model > config.model > DEFAULT_MODEL
+- Used nullish coalescing (`??`) instead of logical OR (`||`) for proper handling of empty string values
+- Pattern: Model resolution at the command layer (src/commands/plan.ts) before calling the business logic function keeps concerns separated
+- The resolved model is passed directly to `runPlanningMode()` - the function's internal DEFAULT_MODEL fallback still exists but will never be reached since we now always pass a resolved model
