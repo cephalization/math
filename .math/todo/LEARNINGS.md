@@ -94,3 +94,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Unknown short flags pass through using their short key (e.g., `-x value` becomes `{ x: "value" }`)
 - Added dedicated unit tests for parseArgs in `src/parse-args.test.ts` since index.ts had no tests
 - Pre-existing test failures in prune.test.ts are unrelated (macOS path canonicalization: `/var` vs `/private/var`)
+
+## dvfozgy9
+
+- Created src/model.ts with model validation utilities for the provider/model-name format
+- Key design: Return type union `{ valid: true, model } | { valid: false, error }` provides TypeScript-friendly narrowing with `if (!result.valid)` checks
+- Used `as const` for SUPPORTED_PROVIDERS array to enable type-safe provider checking: `(typeof SUPPORTED_PROVIDERS)[number]` derives the union type
+- parseModelProvider returns null for invalid input (simple to check), validateModel returns structured error with helpful message
+- Edge cases to handle: empty string, missing slash, provider-only with trailing slash, unsupported providers
+- Pattern: Use indexOf + slice instead of split for parsing - handles multiple slashes correctly (e.g., "openai/gpt-4/turbo" keeps "gpt-4/turbo" as modelName)
