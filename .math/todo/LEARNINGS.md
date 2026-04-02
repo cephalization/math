@@ -113,3 +113,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Updated help text to show model format requirement, supported providers, and default value - all pulled from existing constants/types
 - Gotcha: TypeScript type narrowing requires checking `typeof model !== "string"` rather than `model === undefined || model === true` to handle all boolean cases
 - Pre-existing test failures in prune.test.ts are unrelated to this task (macOS symlink path canonicalization issue)
+
+## wjxkvy1t
+
+- Created src/config.ts with Zod schema for iteration configuration
+- Zod v4 imports use `import { z } from "zod/v4"` syntax (not just `"zod"`)
+- Key pattern: Use `safeParse()` for load operations to handle invalid data gracefully (return null), use `parse()` for save operations to throw on invalid config
+- Used synchronous `fs.readFileSync` instead of async Bun.file().text() for simpler return type (no Promise needed)
+- `Bun.file(path).size` returns 0 for non-existent files - good way to check file existence before reading
+- Tests use `mkdtemp()` for isolated temp directories per test - follows established pattern from LEARNINGS.md
+- Pre-existing prune.test.ts failures remain (macOS `/var` vs `/private/var` path issue)
