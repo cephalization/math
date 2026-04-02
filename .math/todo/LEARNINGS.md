@@ -130,3 +130,12 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Used nullish coalescing (`??`) instead of logical OR (`||`) for proper handling of empty string values
 - Pattern: Model resolution at the command layer (src/commands/plan.ts) before calling the business logic function keeps concerns separated
 - The resolved model is passed directly to `runPlanningMode()` - the function's internal DEFAULT_MODEL fallback still exists but will never be reached since we now always pass a resolved model
+
+## 4mmqn1x7
+
+- Implemented model loading from config in run command with same priority as plan: CLI --model flag > config.model > DEFAULT_MODEL
+- Key design: Created `resolveModel()` function that returns `{ model, source }` tuple to enable logging which source was used
+- Added `ModelSource` type ("flag" | "config" | "default") and passed `modelSource` through `LoopOptions` to `runLoop()`
+- Pattern: Descriptive log output shows model source in parentheses: "Model: anthropic/claude-opus-4-5 (from config)"
+- Reused existing `loadIterationConfig()` from src/config.ts - keeps config loading centralized
+- Important: Model validation happens in index.ts via `validateModelOrExit()` before `run()` is called - the resolved model is already validated

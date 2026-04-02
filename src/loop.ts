@@ -8,6 +8,7 @@ import { getTodoDir } from "./paths";
 import { migrateIfNeeded } from "./migration";
 import { isDexAvailable, dexStatus, dexListReady, dexShow, defaultDexClient } from "./dex";
 import type { DexClient, DexStatus, DexTask, DexTaskDetails } from "./dex";
+import type { ModelSource } from "./commands/run";
 
 const colors = {
   reset: "\x1b[0m",
@@ -21,6 +22,8 @@ const colors = {
 
 export interface LoopOptions {
   model?: string;
+  /** Source of the model: 'flag' (CLI), 'config' (persisted), or 'default' */
+  modelSource?: ModelSource;
   maxIterations?: number;
   pauseSeconds?: number;
   dryRun?: boolean;
@@ -135,6 +138,7 @@ async function createWorkingBranch(loggers: Loggers): Promise<string> {
 
 export async function runLoop(options: LoopOptions = {}): Promise<void> {
   const model = options.model || DEFAULT_MODEL;
+  const modelSource = options.modelSource || "default";
   const maxIterations = options.maxIterations || 100;
   const pauseSeconds = options.pauseSeconds || 3;
   const dryRun = options.dryRun || false;
@@ -220,7 +224,8 @@ export async function runLoop(options: LoopOptions = {}): Promise<void> {
   // }
 
   log("Starting math loop");
-  log(`Model: ${model}`);
+  const sourceLabel = modelSource === "flag" ? "from --model flag" : modelSource === "config" ? "from config" : "default";
+  log(`Model: ${model} (${sourceLabel})`);
   log(`Max iterations: ${maxIterations}`);
   if (dryRun) {
     log("[DRY RUN] Mode enabled - no actual changes will be made");
