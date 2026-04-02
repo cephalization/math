@@ -103,3 +103,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - parseModelProvider returns null for invalid input (simple to check), validateModel returns structured error with helpful message
 - Edge cases to handle: empty string, missing slash, provider-only with trailing slash, unsupported providers
 - Pattern: Use indexOf + slice instead of split for parsing - handles multiple slashes correctly (e.g., "openai/gpt-4/turbo" keeps "gpt-4/turbo" as modelName)
+
+## 9686t3iv
+
+- Integrated model validation into CLI commands by adding a `validateModelOrExit()` helper function
+- Key pattern: Centralized validation function handles type narrowing and exit logic - returns `string | undefined` for clean integration with command options
+- Applied validation to all 4 commands that accept --model: run, plan, init, iterate
+- For `run` command which passes raw options, validation is called separately before `run(options)` since the options object is passed through directly
+- Updated help text to show model format requirement, supported providers, and default value - all pulled from existing constants/types
+- Gotcha: TypeScript type narrowing requires checking `typeof model !== "string"` rather than `model === undefined || model === true` to handle all boolean cases
+- Pre-existing test failures in prune.test.ts are unrelated to this task (macOS symlink path canonicalization issue)

@@ -8,6 +8,7 @@ import { plan } from "./src/commands/plan";
 import { prune } from "./src/commands/prune";
 import { DEFAULT_MODEL } from "./src/constants";
 import { migrateTasksToDexIfNeeded } from "./src/migrate-to-dex";
+import { validateModel, SUPPORTED_PROVIDERS } from "./src/model";
 
 // ANSI colors
 const colors = {
@@ -41,7 +42,10 @@ ${colors.bold}COMMANDS${colors.reset}
   ${colors.cyan}help${colors.reset}      Show this help message
 
 ${colors.bold}OPTIONS${colors.reset}
-  ${colors.dim}-m, --model <model>${colors.reset}      Model to use (default: ${DEFAULT_MODEL})
+  ${colors.dim}-m, --model <model>${colors.reset}      Model to use in provider/model format
+                           (e.g., openai/gpt-4, anthropic/claude-3-opus)
+                           Supported providers: ${SUPPORTED_PROVIDERS.join(", ")}
+                           Default: ${DEFAULT_MODEL}
   ${colors.dim}--max-iterations <n>${colors.reset}    Safety limit (default: 100)
   ${colors.dim}--pause <seconds>${colors.reset}       Pause between iterations (default: 3)
   ${colors.dim}--no-plan${colors.reset}              Skip planning mode after init/iterate
@@ -118,6 +122,22 @@ function parseArgs(args: string[]): Record<string, string | boolean> {
   return parsed;
 }
 
+/**
+ * Validate the model argument if provided. Exits with code 1 if invalid.
+ */
+function validateModelOrExit(model: string | boolean | undefined): string | undefined {
+  if (typeof model !== "string") {
+    // No model provided or --model without value, use default
+    return undefined;
+  }
+  const result = validateModel(model);
+  if (!result.valid) {
+    console.error(`${colors.red}Error: ${result.error}${colors.reset}`);
+    process.exit(1);
+  }
+  return model;
+}
+
 async function main() {
   const [command, ...rest] = Bun.argv.slice(2);
   const options = parseArgs(rest);
@@ -134,16 +154,17 @@ async function main() {
       case "init":
         await init({
           skipPlan: !!options["no-plan"],
-          model: options.model as string,
+          model: validateModelOrExit(options.model),
         });
         break;
       case "plan":
         await plan({
-          model: options.model as string | undefined,
+          model: validateModelOrExit(options.model),
           quick: !!options.quick,
         });
         break;
       case "run":
+        validateModelOrExit(options.model);
         await run(options);
         break;
       case "status":
@@ -152,7 +173,7 @@ async function main() {
       case "iterate":
         await iterate({
           skipPlan: !!options["no-plan"],
-          model: options.model as string,
+          model: validateModelOrExit(options.model),
         });
         break;
       case "prune":
