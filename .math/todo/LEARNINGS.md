@@ -149,3 +149,11 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Empty input on prompt returns undefined (uses default but doesn't persist), valid input persists to config.json
 - The resolved model is passed to `runPlanningMode()` if user chooses to plan, ensuring consistency
 - Pre-existing prune.test.ts failures (macOS /var vs /private/var) are unrelated to this task
+
+## vzd5ppbt
+
+- Reused the promptForModel pattern from iterate.ts for init.ts - same TTY detection and validation flow
+- Model prompt appears after directory creation, before the planning prompt (as specified in task)
+- Three code paths identical to iterate: --model flag → validate/persist, interactive → prompt, non-interactive → default
+- The init command's existing --model flag support was already passed to runPlanningMode - added validation and persist step before that call
+- Pre-existing prune.test.ts failures (macOS /var vs /private/var path canonicalization) remain unrelated to this work

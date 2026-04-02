@@ -1,18 +1,76 @@
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { createInterface } from "node:readline/promises";
 import { $ } from "bun";
 import { PROMPT_TEMPLATE, LEARNINGS_TEMPLATE } from "../templates";
 import { runPlanningMode, askToRunPlanning } from "../plan";
 import { getTodoDir } from "../paths";
 import { getDexDir, isDexAvailable } from "../dex";
+import { DEFAULT_MODEL } from "../constants";
+import { validateModel, SUPPORTED_PROVIDERS } from "../model";
+import { saveIterationConfig } from "../config";
 
 const colors = {
   reset: "\x1b[0m",
   green: "\x1b[32m",
   yellow: "\x1b[33m",
   cyan: "\x1b[36m",
+  red: "\x1b[31m",
 };
+
+/**
+ * Prompt user for implementation model with validation and re-prompt on error.
+ * Returns the validated model string or undefined if user skips.
+ */
+async function promptForModel(todoDir: string): Promise<string | undefined> {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    while (true) {
+      const answer = await rl.question(
+        `Enter model (${colors.cyan}provider/model${colors.reset}), or press Enter for default [${DEFAULT_MODEL}]: `
+      );
+
+      const trimmed = answer.trim();
+
+      // Empty input = use default, don't persist
+      if (!trimmed) {
+        console.log(
+          `${colors.green}✓${colors.reset} Using default model: ${DEFAULT_MODEL}`
+        );
+        rl.close();
+        return undefined;
+      }
+
+      // Validate the input
+      const result = validateModel(trimmed);
+      if (!result.valid) {
+        console.log(`${colors.red}✗${colors.reset} ${result.error}`);
+        console.log(
+          `${colors.yellow}Supported providers: ${SUPPORTED_PROVIDERS.join(", ")}${colors.reset}`
+        );
+        // Re-prompt
+        continue;
+      }
+
+      // Valid input - persist to config
+      saveIterationConfig(todoDir, {
+        model: trimmed,
+        createdAt: new Date().toISOString(),
+      });
+      console.log(`${colors.green}✓${colors.reset} Model set to: ${trimmed}`);
+      rl.close();
+      return trimmed;
+    }
+  } catch {
+    rl.close();
+    return undefined;
+  }
+}
 
 export async function init(
   options: { skipPlan?: boolean; model?: string } = {}
@@ -64,12 +122,40 @@ export async function init(
     `  ${colors.cyan}PROMPT.md${colors.reset}    - System prompt with guardrails`
   );
   console.log(`  ${colors.cyan}LEARNINGS.md${colors.reset} - Knowledge log`);
+  console.log();
+
+  // Model configuration
+  let resolvedModel: string | undefined = options.model;
+
+  if (options.model) {
+    // If --model flag was provided, validate and persist if valid
+    const result = validateModel(options.model);
+    if (!result.valid) {
+      throw new Error(result.error);
+    }
+    saveIterationConfig(todoDir, {
+      model: options.model,
+      createdAt: new Date().toISOString(),
+    });
+    console.log(
+      `${colors.green}✓${colors.reset} Using model from --model flag: ${options.model}`
+    );
+  } else if (process.stdin.isTTY) {
+    // Interactive mode: prompt for model
+    resolvedModel = await promptForModel(todoDir);
+  } else {
+    // Non-interactive mode: use default, don't persist
+    console.log(
+      `${colors.green}✓${colors.reset} Using default model: ${DEFAULT_MODEL}`
+    );
+  }
+  console.log();
 
   // Ask to run planning mode unless --no-plan flag
   if (!options.skipPlan) {
     const shouldPlan = await askToRunPlanning();
     if (shouldPlan) {
-      await runPlanningMode({ todoDir, options: { model: options.model } });
+      await runPlanningMode({ todoDir, options: { model: resolvedModel } });
       return;
     }
   }
