@@ -41,7 +41,7 @@ ${colors.bold}COMMANDS${colors.reset}
   ${colors.cyan}help${colors.reset}      Show this help message
 
 ${colors.bold}OPTIONS${colors.reset}
-  ${colors.dim}--model <model>${colors.reset}          Model to use (default: ${DEFAULT_MODEL})
+  ${colors.dim}-m, --model <model>${colors.reset}      Model to use (default: ${DEFAULT_MODEL})
   ${colors.dim}--max-iterations <n>${colors.reset}    Safety limit (default: 100)
   ${colors.dim}--pause <seconds>${colors.reset}       Pause between iterations (default: 3)
   ${colors.dim}--no-plan${colors.reset}              Skip planning mode after init/iterate
@@ -83,6 +83,11 @@ ${colors.bold}EXAMPLES${colors.reset}
 `);
 }
 
+// Map short flags to their long equivalents
+const SHORT_FLAGS: Record<string, string> = {
+  m: "model",
+};
+
 function parseArgs(args: string[]): Record<string, string | boolean> {
   const parsed: Record<string, string | boolean> = {};
   for (let i = 0; i < args.length; i++) {
@@ -91,11 +96,22 @@ function parseArgs(args: string[]): Record<string, string | boolean> {
     if (arg.startsWith("--")) {
       const key = arg.slice(2);
       const next = args[i + 1];
-      if (next && !next.startsWith("--")) {
+      if (next && !next.startsWith("-")) {
         parsed[key] = next;
         i++;
       } else {
         parsed[key] = true;
+      }
+    } else if (arg.startsWith("-") && arg.length === 2) {
+      // Short flag like -m
+      const shortKey = arg.slice(1);
+      const longKey = SHORT_FLAGS[shortKey] ?? shortKey;
+      const next = args[i + 1];
+      if (next && !next.startsWith("-")) {
+        parsed[longKey] = next;
+        i++;
+      } else {
+        parsed[longKey] = true;
       }
     }
   }

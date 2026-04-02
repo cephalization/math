@@ -84,3 +84,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Pattern: Use `dexMock.getCalls()` to verify the exact sequence of start/complete calls and their order
 - The test verifies: 3 tasks completed in dependency order (task-1 -> task-2 -> task-3), correct call sequence, no max iterations exceeded
 - Test runs in ~56ms (well under the 1 second requirement)
+
+## 9p2tu55l
+
+- Added short flag `-m` as alias for `--model` in the parseArgs function
+- Design pattern: Created `SHORT_FLAGS` mapping object to make adding new short flags trivial (just add to the map)
+- Key change: Modified the "next value" check from `!next.startsWith("--")` to `!next.startsWith("-")` so that short flags are also recognized as flags, not values
+- The parser handles short flags that are exactly 2 characters (dash + single letter) - this is intentional to avoid ambiguity
+- Unknown short flags pass through using their short key (e.g., `-x value` becomes `{ x: "value" }`)
+- Added dedicated unit tests for parseArgs in `src/parse-args.test.ts` since index.ts had no tests
+- Pre-existing test failures in prune.test.ts are unrelated (macOS path canonicalization: `/var` vs `/private/var`)
