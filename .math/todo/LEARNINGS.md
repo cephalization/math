@@ -139,3 +139,13 @@ Use this knowledge to avoid repeating mistakes and build on what works.
 - Pattern: Descriptive log output shows model source in parentheses: "Model: anthropic/claude-opus-4-5 (from config)"
 - Reused existing `loadIterationConfig()` from src/config.ts - keeps config loading centralized
 - Important: Model validation happens in index.ts via `validateModelOrExit()` before `run()` is called - the resolved model is already validated
+
+## qwnnb48t
+
+- Added interactive model prompt to iterate command as step 4 (after archive/backup steps, before planning)
+- Key pattern: Used `createInterface` from `node:readline/promises` with a while loop for re-prompting on validation errors
+- TTY detection via `process.stdin.isTTY` determines whether to show interactive prompt or use default silently
+- Three distinct code paths: (1) --model flag provided → validate and persist, (2) interactive TTY → prompt user, (3) non-interactive → use default
+- Empty input on prompt returns undefined (uses default but doesn't persist), valid input persists to config.json
+- The resolved model is passed to `runPlanningMode()` if user chooses to plan, ensuring consistency
+- Pre-existing prune.test.ts failures (macOS /var vs /private/var) are unrelated to this task
