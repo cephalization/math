@@ -1,5 +1,11 @@
 # @cephalization/math
 
+## 1.1.0
+
+### Minor Changes
+
+- 6d00c1e: feat: Support openai + anthropic models via provider/model pattern
+
 ## 1.0.0
 
 ### Major Changes
